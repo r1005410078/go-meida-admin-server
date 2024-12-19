@@ -1,0 +1,13 @@
+
+POST http://127.0.0.1:8080/v1/user-permissions/save
+User-Agent: vscode-restclient
+content-type: application/json
+
+{"name":"李四", "description":"测试", "action":"test"}
+
+###
+POST http://127.0.0.1:8080/v1/user-permissions/save
+User-Agent: vscode-restclient
+content-type: application/json
+
+{"id": "a4a8ffbe-be1a-11ef-b278-0242ac110003",  "action":"test, add, DELETE "}
