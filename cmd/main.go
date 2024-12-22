@@ -5,10 +5,12 @@ import (
 	"os"
 
 	"github.com/gin-gonic/gin"
+	"github.com/r1005410078/meida-admin-server/internal/app/services"
 	"github.com/r1005410078/meida-admin-server/internal/domain/permissions"
 	"github.com/r1005410078/meida-admin-server/internal/infrastructure/db"
 	"github.com/r1005410078/meida-admin-server/internal/infrastructure/repository"
 	"github.com/r1005410078/meida-admin-server/internal/interfaces/http"
+	"github.com/r1005410078/meida-admin-server/internal/interfaces/shared"
 )
 
 func main() {
@@ -20,9 +22,23 @@ func main() {
 		gin.SetMode(gin.ReleaseMode) // 设置为发布模式
 	}
 
+
+
 	mysqlDb, err := db.GetDB()
 	if err != nil {
 		panic(err)}
+	
+	// 初始化角色服务
+  roleRepo := repository.NewRoleRepository(mysqlDb)
+	roleServices := services.NewRepoServices(roleRepo)
+
+	// 注册事件
+	bus := shared.NewEventBus()
+	bus.Register(roleServices.DeleteRoleEventHandle)
+	bus.Register(roleServices.RoleDeleteFailedEventHandle)
+	bus.Register(roleServices.SaveRoleEventHandle)
+	bus.Register(roleServices.RoleSaveFailedEventHandle)
+
 	
 	userPermissionsHandlers := http.NewUserPermissionsHandlers(permissions.NewPermissionsService(repository.NewPermissionsRepository(mysqlDb)))
 
@@ -31,6 +47,13 @@ func main() {
 	permissionsRouter.POST("/save", userPermissionsHandlers.Save)
 	permissionsRouter.GET("/list", userPermissionsHandlers.List)
 
+
+	roleHttpHandlers := http.NewRoleHandlers(repository.NewRoleAggregateRepository(mysqlDb), bus)
+	roleRouter := v1.Group("/role")
+	roleRouter.POST("/save", roleHttpHandlers.Save)
+	
+
+	// 启动 Gin
 	if err := r.Run(":8080"); err != nil {
 		log.Fatal(err)
 	}

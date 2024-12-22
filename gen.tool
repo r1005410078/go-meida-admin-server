@@ -5,8 +5,8 @@ database:
   # input mysql or postgres or sqlite or sqlserver. consult[https://gorm.io/docs/connecting_to_the_database.html]
   db  : "mysql"
   # enter the required data table or leave it blank.You can input : orders,users,goods
-  tables : 
-    - user_permissions
+  # tables : 
+  #  - user_permissions
   # specify a directory for output
   outPath :  "./internal/infrastructure/dao/query"
   # query code file name, default: gen.go

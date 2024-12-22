@@ -1,0 +1,12 @@
+POST http://127.0.0.1:8080/v1/role/save
+User-Agent: vscode-restclient
+content-type: application/json
+
+{ "name": "ddddd", "description": "测试", "permissionIds": ["4456047d-c03a-11ef-81db-0242ac110003"] }
+
+###
+POST http://127.0.0.1:8080/v1/role/save
+User-Agent: vscode-restclient
+content-type: application/json
+
+{ "id": "12a137a20-f768-49d0-82b8-c72e532b53fb", "description": "测试2222", "permissionIds": ["47491771-c03a-11ef-81db-0242ac110003"] }
