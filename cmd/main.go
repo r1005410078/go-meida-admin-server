@@ -48,10 +48,10 @@ func main() {
 	permissionsRouter.GET("/list", userPermissionsHandlers.List)
 
 
-	roleHttpHandlers := http.NewRoleHandlers(repository.NewRoleAggregateRepository(mysqlDb), bus)
+	roleHttpHandlers := http.NewRoleHandlers(repository.NewRoleAggregateRepository(mysqlDb), bus, roleServices)
 	roleRouter := v1.Group("/role")
 	roleRouter.POST("/save", roleHttpHandlers.Save)
-	
+	roleRouter.GET("/list", roleHttpHandlers.GetRoleList)
 
 	// 启动 Gin
 	if err := r.Run(":8080"); err != nil {

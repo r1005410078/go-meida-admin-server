@@ -1,43 +1,61 @@
 package main
 
 import (
-	"errors"
-	"fmt"
+	"slices"
 
-	"github.com/r1005410078/meida-admin-server/internal/interfaces/shared"
+	"github.com/r1005410078/meida-admin-server/internal/infrastructure/dao/model"
+	"github.com/r1005410078/meida-admin-server/internal/infrastructure/db"
 )
 
 
 func main() {
-	// is is the main function
-	eventBus := shared.NewEventBus()
-	eventBus.Register(AddStudent)
-	eventBus.Register(AddPersion)
+	db, _ := db.GetDB()
 
-	eventBus.Dispatch(Student{name: "Tom"})
-	err := eventBus.Dispatch(Persion{name: "Rongts"})
-
-	if err != nil {
-		fmt.Println(err)
+	type Roles struct {
+		model.Role
+		Permissions []model.UserPermission `json:"permissions"`
 	}
-}
 
-type Student struct {
-	name string
-}
+	var results []struct {
+		model.Role
+		PermissionId string
+	}
 
-func AddStudent(s Student) error {
-	// This is the Add function
-	fmt.Printf("Add = %v ", s.name)
-	return nil
-}
+  db.Table("roles").
+		Raw(`
+		SELECT 
+			id, name, description, permission_id
+			FROM roles r
+			LEFT JOIN roles_permission rp ON r.id = rp.role_id
+	`).Scan(&results)
 
-type Persion struct  {
-	name string
-}
+	rolesMap := make(map[string]Roles)
+	permissionIds := []string{}
 
-func AddPersion(s Persion) error {
-	// This is the Add function
-	fmt.Printf("Add = %v ", s.name)
-	return errors.New("error in AddPersion") 
+	for _, result := range results {
+		if _, exists := rolesMap[result.ID]; !exists {
+			rolesMap[result.ID] = Roles{result.Role, []model.UserPermission{}}
+		}
+
+		if !slices.Contains(permissionIds, result.PermissionId) {
+			permissionIds = append(permissionIds, result.PermissionId)
+		}
+
+		rolesMap[result.ID] = Roles{result.Role, append(rolesMap[result.ID].Permissions, model.UserPermission{ID: result.PermissionId})}
+	}
+
+	UserPermissions := []model.UserPermission{}
+	db.Model(&model.UserPermission{}).Where("id in ?", permissionIds).Find(&UserPermissions)
+
+	permissionsMap := make(map[string]model.UserPermission)
+
+	for _, permission := range UserPermissions {
+		permissionsMap[permission.ID] = permission
+	}
+
+	for _, role := range rolesMap {
+		for index, permission := range role.Permissions {
+			role.Permissions[index] = permissionsMap[permission.ID]
+		}
+	}
 }

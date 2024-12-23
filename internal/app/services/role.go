@@ -45,3 +45,8 @@ func (s *RoleServices) RoleDeleteFailedEventHandle(event events.RoleDeleteFailed
 	log.Printf("delete role failed %v", event.Err)
 	return event.Err
 }
+
+// 获取角色列表
+func (s *RoleServices) GetRoleList() ([]repository.Roles, error) {
+	return s.repo.GetRoleList()
+}
