@@ -59,14 +59,14 @@ func (r *RoleAggregateRepository) SaveRoleAggregate(aggregate *role.RoleAggregat
 	}
 
 	roleModel := model.RoleAggregate {
-		Name: aggregate.Name,
-		ID: *aggregate.Id,
+		RoleID: *aggregate.RoleId,
+		RoleName: aggregate.RoleName,
 		PermissionIds: string(PermissionIds),
 	}
 
 	// 检查角色是否存在
 	var count int64
-	if err := db.Model(&model.RoleAggregate{}).Where("id = ?", roleModel.ID).Count(&count).Error; err != nil {
+	if err := db.Model(&model.RoleAggregate{}).Where("role_id = ?", roleModel.RoleID).Count(&count).Error; err != nil {
 		return err
 	}
 
@@ -79,7 +79,7 @@ func (r *RoleAggregateRepository) SaveRoleAggregate(aggregate *role.RoleAggregat
 	}
 
 	// 更新聚合
-	if err := db.Model(&model.RoleAggregate{}).Where("id = ?", aggregate.Id).Updates(&roleModel).Error; err != nil {
+	if err := db.Model(&model.RoleAggregate{}).Where("role_id = ?", aggregate.RoleId).Updates(&roleModel).Error; err != nil {
 		return err
 	}
 	
@@ -87,14 +87,14 @@ func (r *RoleAggregateRepository) SaveRoleAggregate(aggregate *role.RoleAggregat
 }
 
 func (r *RoleAggregateRepository) DeleteRoleAggregate(id string) error {
-	r.db.Delete(&model.RoleAggregate{}, id)
+	r.db.Where("role_id=?", id).Delete(&model.RoleAggregate{})
 	return nil
 }
 
 func (r *RoleAggregateRepository) GetRoleAggregate(id string) (*role.RoleAggregate, error) {
 	var roleModel model.RoleAggregate
 
-	if err := r.db.Where("id=?", id).First(&roleModel).Error; err != nil {
+	if err := r.db.Where("role_id=?", id).First(&roleModel).Error; err != nil {
 		return nil, err
 	}
 

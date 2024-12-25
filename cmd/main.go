@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"log"
 	"os"
 
@@ -11,10 +12,31 @@ import (
 	"github.com/r1005410078/meida-admin-server/internal/infrastructure/repository"
 	"github.com/r1005410078/meida-admin-server/internal/interfaces/http"
 	"github.com/r1005410078/meida-admin-server/internal/interfaces/shared"
+	"go.uber.org/zap"
 )
 
 func main() {
-	// 初始化 Gin 路由
+	// 创建 zap logger
+	rawJSON := []byte(`{
+	  "level": "debug",
+	  "encoding": "json",
+	  "outputPaths": ["stdout", "log/server.log"],
+	  "errorOutputPaths": ["stderr"],
+	  "initialFields": {"foo": "bar"},
+	  "encoderConfig": {
+	    "messageKey": "message",
+	    "levelKey": "level",
+	    "levelEncoder": "lowercase"
+	  }
+	}`)
+
+	var cfg zap.Config
+	if err := json.Unmarshal(rawJSON, &cfg); err != nil {
+		panic(err)
+	}
+	logger := zap.Must(cfg.Build())
+	defer logger.Sync()
+	
 	r := gin.Default()
 
 	// 根据环境变量设置 Gin 模式，默认是 debug 模式
@@ -22,15 +44,13 @@ func main() {
 		gin.SetMode(gin.ReleaseMode) // 设置为发布模式
 	}
 
-
-
 	mysqlDb, err := db.GetDB()
 	if err != nil {
 		panic(err)}
 	
 	// 初始化角色服务
   roleRepo := repository.NewRoleRepository(mysqlDb)
-	roleServices := services.NewRepoServices(roleRepo)
+	roleServices := services.NewRepoServices(roleRepo, logger)
 
 	// 注册事件
 	bus := shared.NewEventBus()
@@ -38,7 +58,6 @@ func main() {
 	bus.Register(roleServices.RoleDeleteFailedEventHandle)
 	bus.Register(roleServices.SaveRoleEventHandle)
 	bus.Register(roleServices.RoleSaveFailedEventHandle)
-
 	
 	userPermissionsHandlers := http.NewUserPermissionsHandlers(permissions.NewPermissionsService(repository.NewPermissionsRepository(mysqlDb)))
 
@@ -47,11 +66,12 @@ func main() {
 	permissionsRouter.POST("/save", userPermissionsHandlers.Save)
 	permissionsRouter.GET("/list", userPermissionsHandlers.List)
 
-
 	roleHttpHandlers := http.NewRoleHandlers(repository.NewRoleAggregateRepository(mysqlDb), bus, roleServices)
 	roleRouter := v1.Group("/role")
 	roleRouter.POST("/save", roleHttpHandlers.Save)
 	roleRouter.GET("/list", roleHttpHandlers.GetRoleList)
+	roleRouter.DELETE("/delete/:id", roleHttpHandlers.DeleteRole)
+	roleRouter.POST("/delete-permission", roleHttpHandlers.DeleteRolePermission)
 
 	// 启动 Gin
 	if err := r.Run(":8080"); err != nil {

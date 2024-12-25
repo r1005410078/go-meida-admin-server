@@ -1,6 +1,8 @@
 package permissions
 
-import "github.com/r1005410078/meida-admin-server/internal/infrastructure/dao/model"
+import (
+	"github.com/r1005410078/meida-admin-server/internal/infrastructure/dao/model"
+)
 
 type PermissionsService struct {
 	repo PermissionsRepositoryer
@@ -26,3 +28,4 @@ func (s *PermissionsService) Delete(permission *Permission) error {
 func (s *PermissionsService) List()  ([]*model.UserPermission, error) {
 	return s.repo.List();
 }
+

@@ -2,19 +2,21 @@ package services
 
 import (
 	"errors"
-	"log"
 
 	"github.com/r1005410078/meida-admin-server/internal/app/repository"
 	"github.com/r1005410078/meida-admin-server/internal/domain/role/events"
+	"go.uber.org/zap"
 )
 
 type RoleServices struct {
 	repo repository.IRoleRepository
+	logger *zap.Logger
 }
 
-func NewRepoServices(repo repository.IRoleRepository) *RoleServices {
+func NewRepoServices(repo repository.IRoleRepository, logger *zap.Logger) *RoleServices {
 	return &RoleServices{
 		repo,
+		logger,
 	}
 }
 
@@ -28,7 +30,7 @@ func (s *RoleServices) SaveRoleEventHandle(event events.RoleSavedEvent) error {
 
 // 保存角色错误事件处理
 func (s *RoleServices) RoleSaveFailedEventHandle(event events.RoleSaveFailedEvent) error {
-	log.Printf("save event role failed %v", event.Err)
+	s.logger.Sugar().Errorf("save event role failed %v", event.Err)
 	return event.Err
 }
 
@@ -42,7 +44,7 @@ func (s *RoleServices) DeleteRoleEventHandle(event events.RoleDeletedEvent) erro
 
 // 删除角色错误事件处理
 func (s *RoleServices) RoleDeleteFailedEventHandle(event events.RoleDeleteFailedEvent) error {
-	log.Printf("delete role failed %v", event.Err)
+	s.logger.Sugar().Errorf("delete role failed %v", event.Err)
 	return event.Err
 }
 

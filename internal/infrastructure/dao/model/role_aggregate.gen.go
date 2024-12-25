@@ -6,17 +6,20 @@ package model
 
 import (
 	"time"
+
+	"gorm.io/gorm"
 )
 
 const TableNameRoleAggregate = "role_aggregate"
 
 // RoleAggregate mapped from table <role_aggregate>
 type RoleAggregate struct {
-	ID            string    `gorm:"column:id;primaryKey" json:"id"`
-	Name          string    `gorm:"column:name;not null" json:"name"`
-	PermissionIds string    `gorm:"column:permission_ids;not null" json:"permission_ids"`
-	CreatedAt     time.Time `gorm:"column:created_at;not null;default:CURRENT_TIMESTAMP" json:"created_at"`
-	UpdatedAt     time.Time `gorm:"column:updated_at;not null;default:CURRENT_TIMESTAMP" json:"updated_at"`
+	RoleID        string         `gorm:"column:role_id;primaryKey" json:"role_id"`
+	RoleName      string         `gorm:"column:role_name;not null" json:"role_name"`
+	PermissionIds string         `gorm:"column:permission_ids;not null" json:"permission_ids"`
+	DeletedAt     gorm.DeletedAt `gorm:"column:deleted_at" json:"deleted_at"`
+	CreatedAt     time.Time      `gorm:"column:created_at;not null;default:CURRENT_TIMESTAMP" json:"created_at"`
+	UpdatedAt     time.Time      `gorm:"column:updated_at;not null;default:CURRENT_TIMESTAMP" json:"updated_at"`
 }
 
 // TableName RoleAggregate's table name

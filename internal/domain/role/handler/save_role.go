@@ -62,7 +62,7 @@ func (h *SaveRoleCommandHandler) Handle(command *command.SaveRoleCommand) error 
 	}
 
 	// 触发角色保存成功事件
-	command.Id = aggregate.Id
+	command.Id = aggregate.RoleId
 	if err := h.IEventBus.Dispatch(*command.ToEvent()); err != nil {
 		tx.Rollback()
 		return err

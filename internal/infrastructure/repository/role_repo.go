@@ -4,6 +4,7 @@ import (
 	"slices"
 
 	"github.com/r1005410078/meida-admin-server/internal/app/repository"
+	"github.com/r1005410078/meida-admin-server/internal/domain/role/command"
 	"github.com/r1005410078/meida-admin-server/internal/domain/role/events"
 	"github.com/r1005410078/meida-admin-server/internal/infrastructure/dao/model"
 	"gorm.io/gorm"
@@ -67,7 +68,29 @@ func (r *RoleRepository) SaveRole(inputRole events.RoleSavedEvent) error {
 
 // 删除角色
 func (r *RoleRepository) DeleteRole(id string) error {
-	r.db.Delete(&model.Role{}, id)
+	if err := r.db.Model(&model.Role{}).
+		Where("id=?", id).
+		Delete(&model.Role{}).Error; err != nil {
+		return err
+	}
+
+	if err := r.db.Model(&model.RolesPermission{}).
+		Where("role_id=?", id).
+		Delete(&model.RolesPermission{}).Error; err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// 删除角色权限
+func (r *RoleRepository) DeleteRolePermission(inputData command.DeletePermissionCommand) error {
+	if err := r.db.Model(&model.RolesPermission{}).
+		Where("role_id = ? AND permission_id in ?", inputData.RoleId, inputData.PermissionIds).
+		Delete(&model.RolesPermission{}).Error; err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -83,8 +106,8 @@ func (r *RoleRepository) GetRoleList() ([]repository.Roles, error) {
 		Raw(`
 		SELECT 
 			id, name, description, permission_id
-			FROM roles r
-			LEFT JOIN roles_permission rp ON r.id = rp.role_id
+			FROM (select * from roles where deleted_at is null) r
+			LEFT JOIN roles_permission rp ON r.id = rp.role_id 
 	`).Scan(&results)
 
 	rolesMap := make(map[string]repository.Roles)

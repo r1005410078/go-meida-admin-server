@@ -11,34 +11,29 @@ import (
 )
 
 type RoleAggregate struct {
-	Id        *string
-	Name      string
+	RoleId        *string
+	RoleName      string
 	PermissionIds []string
 	DeletedAt *time.Time
 	UpdatedAt *time.Time
 }
 
 // 创建聚合
-func NewRoleAggregate(name string) *RoleAggregate {
+func NewRoleAggregate(RoleName string) *RoleAggregate {
 	return &RoleAggregate{
-		Id: shared.NewId(),
-		Name: name,
+		RoleId: shared.NewId(),
+		RoleName: RoleName,
 	}
 }
 
 // 更新聚合
 func (r *RoleAggregate) Save(command *command.SaveRoleCommand, bus shared.IEventBus) error {
-	// 如果已经删除了，直接返回
-	if r.DeletedAt != nil {
-		return bus.Dispatch(events.NewRoleSaveFailedEvent(*command.ToEvent(), errors.New("角色已经被删除")))
-	}
-
 	// 如果权限id已经存在，直接返回
 	if r.isExistPermissionIds(command.PermissionIds) {
 		return bus.Dispatch(events.NewRoleSaveFailedEvent(*command.ToEvent(), errors.New("权限id已存在")))
 	}
 
-	r.Name = command.Name
+	r.RoleName = command.Name
 	now := time.Now()
 	r.UpdatedAt = &now
 	r.PermissionIds = append(r.PermissionIds, command.PermissionIds...)
@@ -58,12 +53,6 @@ func (r *RoleAggregate) isExistPermissionIds(permissionIds []string) bool {
 
 // 删除权限
 func (r *RoleAggregate) DeletePermission(command *command.DeletePermissionCommand, bus shared.IEventBus) error {
-
-	// 如果已经删除了，直接返回
-	if r.DeletedAt != nil {
-		return bus.Dispatch(events.NewDeletePermissionFailedEvent(command.Id, command.PermissionIds, errors.New("角色已经被删除")))
-	}
-
 	now := time.Now()
 
 	r.UpdatedAt = &now
@@ -79,18 +68,13 @@ func (r *RoleAggregate) DeletePermission(command *command.DeletePermissionComman
 	}
 	
 	// 触发角色删除成功事件
-	return bus.Dispatch(events.DeletedPermissionEvent{Id: command.Id, PermissionId: command.PermissionIds})
+	return bus.Dispatch(events.DeletedPermissionEvent{Id: command.RoleId, PermissionId: command.PermissionIds})
 }
 
 // 删除角色
 func (r *RoleAggregate) Delete(command *command.DeleteRoleCommand, IEventBus shared.IEventBus) error {
-	// 如果已经删除了，直接返回
-	if r.DeletedAt != nil {
-		return IEventBus.Dispatch(events.RoleDeleteFailedEvent{Id: command.Id, Err: errors.New("role has been deleted")})
-	}
-
 	now := time.Now()
 	r.DeletedAt = &now
 	// 触发角色删除成功事件
-	return IEventBus.Dispatch(events.RoleDeletedEvent{Id: command.Id})
+	return nil
 }

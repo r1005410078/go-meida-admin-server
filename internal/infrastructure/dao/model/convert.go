@@ -15,8 +15,8 @@ func (m RoleAggregate) ToRoleAggregate() (*role.RoleAggregate, error) {
 	}
 
 	return &role.RoleAggregate{
-		Id:        &m.ID,
-		Name:      m.Name,
+		RoleId:        &m.RoleID,
+		RoleName:      m.RoleName,
 		DeletedAt: nil,
 		UpdatedAt: &m.UpdatedAt,
 		PermissionIds: PermissionIds,

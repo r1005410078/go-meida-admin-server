@@ -6,16 +6,19 @@ package model
 
 import (
 	"time"
+
+	"gorm.io/gorm"
 )
 
 const TableNameRolesPermission = "roles_permission"
 
 // RolesPermission mapped from table <roles_permission>
 type RolesPermission struct {
-	RoleID       string    `gorm:"column:role_id;primaryKey" json:"role_id"`
-	PermissionID string    `gorm:"column:permission_id;primaryKey" json:"permission_id"`
-	CreatedAt    time.Time `gorm:"column:created_at;not null;default:CURRENT_TIMESTAMP" json:"created_at"`
-	UpdatedAt    time.Time `gorm:"column:updated_at;not null;default:CURRENT_TIMESTAMP" json:"updated_at"`
+	RoleID       string         `gorm:"column:role_id;primaryKey" json:"role_id"`
+	PermissionID string         `gorm:"column:permission_id;primaryKey" json:"permission_id"`
+	DeletedAt    gorm.DeletedAt `gorm:"column:deleted_at" json:"deleted_at"`
+	CreatedAt    time.Time      `gorm:"column:created_at;not null;default:CURRENT_TIMESTAMP" json:"created_at"`
+	UpdatedAt    time.Time      `gorm:"column:updated_at;not null;default:CURRENT_TIMESTAMP" json:"updated_at"`
 }
 
 // TableName RolesPermission's table name
