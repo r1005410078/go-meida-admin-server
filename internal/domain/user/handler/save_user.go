@@ -1,0 +1,82 @@
+package handler
+
+import (
+	"errors"
+
+	"github.com/r1005410078/meida-admin-server/internal/domain/shared"
+	"github.com/r1005410078/meida-admin-server/internal/domain/user"
+	"github.com/r1005410078/meida-admin-server/internal/domain/user/command"
+	"github.com/r1005410078/meida-admin-server/internal/domain/user/events"
+)
+
+type SaveUserCommandHandler struct {
+	repo user.IUserAggregateRepository
+	eventBus shared.IEventBus
+}
+
+func NewSaveUserCommandHandler(repo user.IUserAggregateRepository, eventBus shared.IEventBus) *SaveUserCommandHandler {
+	return &SaveUserCommandHandler{
+		repo: repo,
+		eventBus: eventBus,
+	}
+}
+
+func (h *SaveUserCommandHandler) Handle(command *command.SaveUserCommand) error {
+	// 如果不是是管理员，不允许保存
+	if !h.repo.IsAdmin() {
+		return h.eventBus.Dispatch(events.NewSaveUserFailedEvent(command.ToEvent(), errors.New("admin role cannot be saved")))
+	}
+	
+	var aggregate *user.UserAggregate
+
+	if command.ID == "" {
+		// 用户名和手机号已经存在
+		if h.repo.ExistUser(command.Username, command.Phone) {
+			return h.eventBus.Dispatch(events.NewSaveUserFailedEvent(command.ToEvent(), errors.New("user already exists")))
+		}
+		
+		// 创建聚合
+		aggregate = user.NewUserAggregate(command.ID, command.Username, command.Phone)
+	} else {
+		aggregate, err := h.repo.GetUserAggregate(command.ID)
+		if err != nil {
+			return err
+		}
+
+		// 更新聚合
+		if err := aggregate.Update(command, h.eventBus); err != nil {
+			return err
+		}
+	}
+
+	// 开事务保存用户聚合
+	tx := h.repo.Begin()
+	if err := h.repo.SaveUserAggregate(aggregate); err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	// 发布保存用户事件
+	if err := h.eventBus.Dispatch(command.ToEvent()); err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	// 如果有状态变化，发布更新状态事件
+	if command.Status != "" {
+		if err := h.eventBus.Dispatch(events.UserStatusEvent {Id: command.ID, Status: command.Status}); err != nil {
+			tx.Rollback()
+			return err
+		} 
+	}
+
+	// 如果有角色变化，发布更新角色事件
+	if command.RoleId != ""  {
+		if err := h.eventBus.Dispatch(events.AssoicatedRolesEvent{UserId: command.ID, RoleId: command.RoleId }); err != nil {
+			tx.Rollback()
+			return err
+		}
+	}
+
+	return nil
+}
