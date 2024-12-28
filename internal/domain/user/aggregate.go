@@ -2,28 +2,28 @@ package user
 
 import (
 	"errors"
-	"time"
 
 	"github.com/r1005410078/meida-admin-server/internal/domain/shared"
 	"github.com/r1005410078/meida-admin-server/internal/domain/user/command"
 	"github.com/r1005410078/meida-admin-server/internal/domain/user/events"
+	"gorm.io/gorm"
 )
 
 type UserAggregate struct {
-	UserId    string
-	Name      string
-	Phone     string
-	Status    string
-	RoleId    string
-	DeletedAt *time.Time
+	UserId       *string
+	Username         *string
+	Phone        *string
+	Status       *string
+	Role         *string
+	PasswordHash *string
+	DeletedAt    *gorm.DeletedAt
 }
 
 
-
-func NewUserAggregate(name string, phone string, status string) *UserAggregate {
+func NewUserAggregate(username *string, phone *string, status *string) *UserAggregate {
 	return &UserAggregate{
-		UserId:    *shared.NewId(),
-		Name:      name,
+		UserId:    shared.NewId(),
+		Username:  username,
 		Phone:     phone,
 		Status:    status,
 		DeletedAt: nil,
@@ -31,47 +31,31 @@ func NewUserAggregate(name string, phone string, status string) *UserAggregate {
 }
 
 func (u *UserAggregate) Update(command *command.SaveUserCommand, bus shared.IEventBus) error {
-	if u.DeletedAt != nil {
-		bus.Dispatch(events.NewSaveUserFailedEvent(command.ToEvent(), errors.New("用户已删除")))
-		return errors.New("用户已删除")
-	}
-
 	// 验证密码负责度
 	// TODO
-
-	u.Name = command.Username
+	u.Username = command.Username
 	u.Phone = command.Phone
+	u.Status = command.Status
+	u.Role = command.RoleId
+	u.PasswordHash = command.PasswordHash
 
 	return nil
 }
 
 func (u *UserAggregate) SaveStatus(command *command.UserStatusCommand, eventBus shared.IEventBus) error {
-	if u.DeletedAt != nil {
-		eventBus.Dispatch(events.NewUserStatusFailedEvent(command.ToEvent(), errors.New("用户已删除")))
-		return errors.New("用户已删除")
-	}
-
-	if command.Status == u.Status {
-		eventBus.Dispatch(events.NewUserStatusFailedEvent(command.ToEvent(), errors.New("状态未变化")))
-		return errors.New("状态更新失败")
+	if *command.Status == *u.Status {
+		return eventBus.Dispatch(events.NewUserStatusFailedEvent(command.ToEvent(), errors.New("不能重复设置同样的状态")))
 	}
 
 	u.Status = command.Status
 	return nil
 }
 
-
 func (u *UserAggregate) AssociatedRoles(command *command.AssociatedRolesCommand, bus shared.IEventBus) error {
-	if u.DeletedAt != nil {
-		bus.Dispatch(events.NewAssoicatedRolesFailedEvent(command.ToEvent(), errors.New("用户已删除")))
-		return errors.New("用户已删除")
+	if u.Role != nil && command.RoleId == *u.Role {
+		return bus.Dispatch(events.NewAssoicatedRolesFailedEvent(command.ToEvent(), errors.New("角色重复被关联")))
 	}
 
-	if command.RoleId == u.RoleId {
-		bus.Dispatch(events.NewAssoicatedRolesFailedEvent(command.ToEvent(), errors.New("角色已关联")))
-		return errors.New("角色已关联")
-	}
-
-	u.RoleId = command.RoleId
+	u.Role = &command.RoleId
 	return nil
 }

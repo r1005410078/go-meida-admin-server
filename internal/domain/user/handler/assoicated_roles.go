@@ -29,11 +29,11 @@ func (h *AssoicatedRolesCommandHandler) Handle(command *command.AssociatedRolesC
 	}
 
 	// 检查角色是否存在
-	if !h.repo.ExistRole(command.RoleId) {
+	if !h.repo.ExistRole(&command.RoleId) {
 		return h.eventBus.Dispatch(events.NewAssoicatedRolesFailedEvent(command.ToEvent(), errors.New("角色不存在")))
 	}
 	
-	aggregate, err := h.repo.GetUserAggregate(command.UserId)
+	aggregate, err := h.repo.GetUserAggregate(&command.UserId)
 	// 聚合不存在，直接返回
 	if err != nil {
 		return err

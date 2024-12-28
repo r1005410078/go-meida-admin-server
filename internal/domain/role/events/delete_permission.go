@@ -24,5 +24,4 @@ func NewDeletePermissionFailedEvent (Id string, PermissionId []string, Err error
 		PermissionId,
 		Err,
 	}
-
 }

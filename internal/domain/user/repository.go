@@ -10,21 +10,21 @@ type IUserAggregateRepository interface {
 	IsAdmin() bool
 
 	// 用户ID是否存在
-	ExistUserId(userId string) bool
+	ExistUserId(userId *string) bool
 
   // 用户名称是否存在
-	ExistUser(name string, phone string) bool
+	ExistUser(name *string) bool
 
 	// 是否存在角色
-	ExistRole(roleId string) bool
+	ExistRole(roleId *string) bool
 
 	// 获取聚合
-	GetUserAggregate(userId string) (*UserAggregate, error)
+	GetUserAggregate(userId *string) (*UserAggregate, error)
 
 	// 保存聚合
 	SaveUserAggregate(aggregate *UserAggregate) error
 
 	// 删除聚合
-	DeleteUserAggregate(userId string) error
+	DeleteUserAggregate(userId *string) error
 }
 

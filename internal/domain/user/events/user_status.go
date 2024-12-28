@@ -2,7 +2,7 @@ package events
 
 type UserStatusEvent struct {
 	Id string
-	Status string
+	Status *string
 }
 
 type UserStatusFailedEvent struct {

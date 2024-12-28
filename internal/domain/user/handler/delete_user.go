@@ -24,14 +24,14 @@ func NewDeleteUserCommandHandler(repo user.IUserAggregateRepository, eventBus sh
 func (h *DeleteUserCommandHandler) Handle(command *command.DeleteUserCommand) error {
 	// 如果不是是管理员，不允许删除
 	if !h.repo.IsAdmin() {
-		return h.eventBus.Dispatch(events.UserDeleteFailedEvent{Id: command.Id, Err: errors.New("admin role cannot be deleted")})
+		return h.eventBus.Dispatch(&events.UserDeleteFailedEvent{Id: command.Id, Err: errors.New("admin role cannot be deleted")})
 	}
 
-	aggregate, err := h.repo.GetUserAggregate(command.Id)
+	aggregate, err := h.repo.GetUserAggregate(&command.Id)
 
 	// 如果用户不存在，直接返回
 	if err != nil {
-		h.eventBus.Dispatch(events.UserDeleteFailedEvent{Id: command.Id, Err: err})
+		h.eventBus.Dispatch(&events.UserDeleteFailedEvent{Id: command.Id, Err: err})
 		return errors.New("用户不存在")
 	}
 
@@ -43,7 +43,7 @@ func (h *DeleteUserCommandHandler) Handle(command *command.DeleteUserCommand) er
 	}
 
 	// 发布事件
-	if err := h.eventBus.Dispatch(events.UserDeletedEvent{Id: command.Id}); err != nil {
+	if err := h.eventBus.Dispatch(&events.UserDeletedEvent{Id: command.Id}); err != nil {
 		tx.Rollback()
 		return err
 	}

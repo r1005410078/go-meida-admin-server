@@ -8,7 +8,7 @@ type RoleSavedEvent struct {
 	// 角色权限
 	PermissionIds []string
 	// 角色描述
-	Description string
+	Description *string
 }
 
 // 角色保存失败事件

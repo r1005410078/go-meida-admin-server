@@ -16,7 +16,7 @@ database:
   # generated model code's package name
   modelPkgName  : ""
   # generate with pointer when field is nullable
-  fieldNullable : false
+  fieldNullable : true
   onlyModel: true
   # generate field with gorm index tag
   fieldWithIndexTag : false

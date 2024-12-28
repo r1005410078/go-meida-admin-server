@@ -1,0 +1,62 @@
+### 保存用户
+POST http://localhost:8080/v1/user/save
+Content-Type: application/json
+
+{
+    "username": "testuser",
+    "email": "test@example.com",
+    "phone": "1234567890",
+    "full_name": "Test User",
+    "avatar_url": "https://example.com/avatar.jpg",
+    "gender": "male",
+    "birthday": "1990-01-01T00:00:00Z",
+    "address": "Test Address",
+    "password_hash": "hashed_password",
+    "status": "active",
+    "role": "user_role",
+    "referred_by": "referrer_id"
+}
+
+### 更新
+POST http://localhost:8080/v1/user/save
+Content-Type: application/json
+
+{
+    "id": "01a07a20-70c5-4516-a62b-a57013192948",
+    "username": "aaaaa",
+    "email": "test@example.com",
+    "phone": "333333",
+    "full_name": "Test User",
+    "avatar_url": "https://example.com/avatar111.jpg",
+    "gender": "male",
+    "birthday": "1990-01-01T00:00:00Z",
+    "address": "Test Address",
+    "password_hash": "12345678",
+    "status": "active",
+    "role": "user_role",
+    "referred_by": "referrer_id"
+}
+
+### 获取用户列表
+GET http://localhost:8080/v1/user/list
+
+### 删除用户
+DELETE http://localhost:8080/v1/user/delete/01a07a20-70c5-4516-a62b-a57013192948
+
+### 更新用户状态
+POST http://localhost:8080/v1/user/status
+Content-Type: application/json
+
+{
+    "id": "01a07a20-70c5-4516-a62b-a57013192948",
+    "status": "inactive"
+}
+
+### 关联角色
+POST http://localhost:8080/v1/user/associated-roles
+Content-Type: application/json
+
+{
+    "userId": "01a07a20-70c5-4516-a62b-a57013192948",
+    "roleId": "da11f1bb-5727-4d79-bdcc-78e526e10362"
+}

@@ -29,14 +29,16 @@ func (h *UserStatusCommandHandler) Handle(command *command.UserStatusCommand) er
 		return errors.New("没有权限")
 	}
 
-	aggregate, err := h.repo.GetUserAggregate(command.Id)
+	aggregate, err := h.repo.GetUserAggregate(&command.Id)
 	if err != nil {
 		// 用户不存在
 		h.eventBus.Dispatch(events.NewUserStatusFailedEvent(command.ToEvent(), errors.New("用户不存在")))
 		return err
 	}
 
-	aggregate.SaveStatus(command, h.eventBus)
+	if err := aggregate.SaveStatus(command, h.eventBus); err != nil {
+		return err
+	}
 
 	// 如果有状态变化，保存聚合
 	tx := h.repo.Begin()
@@ -51,5 +53,5 @@ func (h *UserStatusCommandHandler) Handle(command *command.UserStatusCommand) er
 		return err
 	}
 
-	return nil
+	return tx.Commit().Error
 }

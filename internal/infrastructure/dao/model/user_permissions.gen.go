@@ -12,12 +12,12 @@ const TableNameUserPermission = "user_permissions"
 
 // UserPermission mapped from table <user_permissions>
 type UserPermission struct {
-	ID          string    `gorm:"column:id;primaryKey;default:uuid()" json:"id"`
-	Name        string    `gorm:"column:name;not null" json:"name"`
-	Description string    `gorm:"column:description;not null" json:"description"`
-	Action      string    `gorm:"column:action;not null" json:"action"`
-	CreateAt    time.Time `gorm:"column:create_at;default:CURRENT_TIMESTAMP" json:"create_at"`
-	UpdatedAt   time.Time `gorm:"column:updated_at;default:CURRENT_TIMESTAMP" json:"updated_at"`
+	ID          string     `gorm:"column:id;primaryKey;default:uuid()" json:"id"`
+	Name        string     `gorm:"column:name;not null" json:"name"`
+	Description string     `gorm:"column:description;not null" json:"description"`
+	Action      string     `gorm:"column:action;not null" json:"action"`
+	CreateAt    *time.Time `gorm:"column:create_at;default:CURRENT_TIMESTAMP" json:"create_at"`
+	UpdatedAt   *time.Time `gorm:"column:updated_at;default:CURRENT_TIMESTAMP" json:"updated_at"`
 }
 
 // TableName UserPermission's table name

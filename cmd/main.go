@@ -1,9 +1,10 @@
 package main
 
 import (
-	"encoding/json"
 	"log"
 	"os"
+	"path/filepath"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/r1005410078/meida-admin-server/internal/app/services"
@@ -13,30 +14,62 @@ import (
 	"github.com/r1005410078/meida-admin-server/internal/interfaces/http"
 	"github.com/r1005410078/meida-admin-server/internal/interfaces/shared"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 func main() {
-	// 创建 zap logger
-	rawJSON := []byte(`{
-	  "level": "debug",
-	  "encoding": "json",
-	  "outputPaths": ["stdout", "log/server.log"],
-	  "errorOutputPaths": ["stderr"],
-	  "initialFields": {"foo": "bar"},
-	  "encoderConfig": {
-	    "messageKey": "message",
-	    "levelKey": "level",
-	    "levelEncoder": "lowercase"
-	  }
-	}`)
-
-	var cfg zap.Config
-	if err := json.Unmarshal(rawJSON, &cfg); err != nil {
-		panic(err)
+	// 获取当前工作目录
+	currentDir, err := os.Getwd()
+	if err != nil {
+		log.Fatalf("无法获取当前工作目录: %v", err)
 	}
-	logger := zap.Must(cfg.Build())
-	defer logger.Sync()
+
+	// 确保日志目录存在
+	logDir := filepath.Join(currentDir, "log")
+	if err := os.MkdirAll(logDir, 0755); err != nil {
+		log.Fatalf("无法创建日志目录: %v", err)
+	}
+
+	// 配置日志
+	logConfig := zap.NewProductionConfig()
 	
+	// 设置输出路径
+	logConfig.OutputPaths = []string{
+		"stdout",
+		filepath.Join(logDir, "server.log"),
+	}
+	logConfig.ErrorOutputPaths = []string{
+		"stderr",
+		filepath.Join(logDir, "error.log"),
+	}
+
+	// 配置编码器
+	logConfig.EncoderConfig.TimeKey = "timestamp"
+	logConfig.EncoderConfig.EncodeTime = zapcore.TimeEncoderOfLayout(time.RFC3339)
+	logConfig.EncoderConfig.StacktraceKey = "stacktrace"
+	logConfig.EncoderConfig.MessageKey = "message"
+	logConfig.EncoderConfig.LevelKey = "level"
+	logConfig.EncoderConfig.CallerKey = "caller"
+	logConfig.EncoderConfig.FunctionKey = "func"
+	
+	// 开启开发环境更详细的日志
+	if gin.Mode() == gin.DebugMode {
+		logConfig.Development = true
+		logConfig.Level = zap.NewAtomicLevelAt(zap.DebugLevel)
+	}
+	
+	logger, err := logConfig.Build(
+		zap.AddCaller(),      // 添加调用者信息
+		zap.AddCallerSkip(1), // 跳过一层调用栈，直接显示业务代码位置
+	)
+	if err != nil {
+		log.Fatalf("无法初始化日志: %v", err)
+	}
+	defer logger.Sync()
+
+	// 替换全局logger
+	zap.ReplaceGlobals(logger)
+
 	r := gin.Default()
 
 	// 根据环境变量设置 Gin 模式，默认是 debug 模式
@@ -46,32 +79,68 @@ func main() {
 
 	mysqlDb, err := db.GetDB()
 	if err != nil {
-		panic(err)}
+		panic(err)
+	}
 	
 	// 初始化角色服务
-  roleRepo := repository.NewRoleRepository(mysqlDb)
+	roleRepo := repository.NewRoleRepository(mysqlDb)
 	roleServices := services.NewRepoServices(roleRepo, logger)
 
-	// 注册事件
+	// 初始化用户服务
+	userRepo := repository.NewUserRepository(mysqlDb)
+	userServices := services.NewUserServices(userRepo, logger)
+
+	// 注册事件总线
 	bus := shared.NewEventBus()
+
+	// 注册角色相关事件处理器
 	bus.Register(roleServices.DeleteRoleEventHandle)
 	bus.Register(roleServices.RoleDeleteFailedEventHandle)
 	bus.Register(roleServices.SaveRoleEventHandle)
 	bus.Register(roleServices.RoleSaveFailedEventHandle)
-	
-	userPermissionsHandlers := http.NewUserPermissionsHandlers(permissions.NewPermissionsService(repository.NewPermissionsRepository(mysqlDb)))
 
+	// 注册用户相关事件处理器
+	bus.Register(userServices.SaveUserEventHandle)
+	bus.Register(userServices.SaveUserFailedEventHandle)
+	bus.Register(userServices.DeleteUserHandle)
+	bus.Register(userServices.DeleteUserFailedEventHandle)
+	bus.Register(userServices.AssoicatedRolesEventHandle)
+	bus.Register(userServices.AssoicatedRolesFailedEventHandle)
+	bus.Register(userServices.SaveUserStatusEventHandle)
+	bus.Register(userServices.SaveUserStatusFailedEventHandle)
+	
+	// 初始化权限处理器
+	userPermissionsHandlers := http.NewUserPermissionsHandlers(
+		permissions.NewPermissionsService(
+			repository.NewPermissionsRepository(mysqlDb),
+		),
+	)
+
+	// 路由分组
 	v1 := r.Group("/v1")
+
+	// 权限路由
 	permissionsRouter := v1.Group("/user-permissions")
 	permissionsRouter.POST("/save", userPermissionsHandlers.Save)
 	permissionsRouter.GET("/list", userPermissionsHandlers.List)
 
+	// 角色路由
 	roleHttpHandlers := http.NewRoleHandlers(repository.NewRoleAggregateRepository(mysqlDb), bus, roleServices)
 	roleRouter := v1.Group("/role")
 	roleRouter.POST("/save", roleHttpHandlers.Save)
 	roleRouter.GET("/list", roleHttpHandlers.GetRoleList)
 	roleRouter.DELETE("/delete/:id", roleHttpHandlers.DeleteRole)
 	roleRouter.POST("/delete-permission", roleHttpHandlers.DeleteRolePermission)
+
+	// 用户路由
+	userHttpHandlers := http.NewUserHandlers(repository.NewUserAggregateRepository(mysqlDb, true), bus, userServices)
+	userRouter := v1.Group("/user")
+	userRouter.POST("/save", userHttpHandlers.Save)
+	userRouter.GET("/list", userHttpHandlers.GetUserList)
+	userRouter.DELETE("/delete/:id", userHttpHandlers.DeleteUser)
+	userRouter.POST("/status", userHttpHandlers.SaveUserStatus)
+	userRouter.POST("/associated-roles", userHttpHandlers.AssoicatedRoles)
+	
 
 	// 启动 Gin
 	if err := r.Run(":8080"); err != nil {

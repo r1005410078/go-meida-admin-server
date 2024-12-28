@@ -6,13 +6,13 @@ type AssoicatedRolesEvent struct {
 }
 
 type AssoicatedRolesFailedEvent struct {
-	AssoicatedRolesEvent
+	*AssoicatedRolesEvent
 	Err error 
 } 
 
-func NewAssoicatedRolesFailedEvent(AssoicatedRolesEvent *AssoicatedRolesEvent, Err error) AssoicatedRolesFailedEvent {
-	return AssoicatedRolesFailedEvent{
-		*AssoicatedRolesEvent,
+func NewAssoicatedRolesFailedEvent(AssoicatedRolesEvent *AssoicatedRolesEvent, Err error) *AssoicatedRolesFailedEvent {
+	return &AssoicatedRolesFailedEvent{
+		AssoicatedRolesEvent,
 		Err,
 	}
 }

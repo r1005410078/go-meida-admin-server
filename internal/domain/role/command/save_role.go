@@ -10,7 +10,7 @@ type SaveRoleCommand struct {
 	// 角色权限
 	PermissionIds []string `json:"permissionIds"`
 	// 角色描述
-	Description string `json:"description"`
+	Description *string `json:"description"`
 }
 
 // 转化成事件

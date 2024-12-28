@@ -1,6 +1,6 @@
 ## 创建表
 
-migrate create -ext sql -dir internal/infrastructure/db/migrations create_user_permissions
+migrate create -ext sql -dir internal/infrastructure/db/migrations create_users
 
 ## 生成表
 
