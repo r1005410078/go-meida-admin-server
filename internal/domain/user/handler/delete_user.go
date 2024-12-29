@@ -35,18 +35,18 @@ func (h *DeleteUserCommandHandler) Handle(command *command.DeleteUserCommand) er
 		return errors.New("用户不存在")
 	}
 
-	tx := h.repo.Begin()
+	h.repo.Begin()
 	// 删除聚合
 	if err := h.repo.DeleteUserAggregate(aggregate.UserId); err != nil {
-		tx.Rollback()
+		h.repo.Rollback()
 		return err
 	}
 
 	// 发布事件
 	if err := h.eventBus.Dispatch(&events.UserDeletedEvent{Id: command.Id}); err != nil {
-		tx.Rollback()
+		h.repo.Rollback()
 		return err
 	}
 
-	return tx.Commit().Error
+	return h.repo.Commit()
 }

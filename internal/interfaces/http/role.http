@@ -18,3 +18,43 @@ content-type: application/json
 
 ###
 DELETE http://127.0.0.1:8080/v1/role/delete/da11f1bb-5727-4d79-bdcc-78e526e10362
+
+### 发送邮箱验证码
+POST http://127.0.0.1:8080/v1/user/send-verify-code
+User-Agent: vscode-restclient
+content-type: application/json
+
+{
+  "email": "1005410788@qq.com"
+}
+     
+### 用户注册
+POST http://127.0.0.1:8080/v1/user/register
+User-Agent: vscode-restclient
+content-type: application/json
+
+{
+  "username": "test",
+  "password": "r12345678",
+  "email": "1005410788@qq.com",
+  "verificationCode": "141768"
+}
+
+### 用户登录
+POST http://127.0.0.1:8080/v1/user/login
+User-Agent: vscode-restclient
+content-type: application/json
+
+{
+  "username": "test",
+  "password": "r12345678"
+}
+
+### 刷新token
+POST http://127.0.0.1:8080/v1/user/refresh-token
+User-Agent: vscode-restclient
+content-type: application/json
+
+{
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MzU1NzI1MTcsImlkIjoiOTJmZDJiYWItZjg4Yi00NDhjLTljZjQtNjRhNDg4NTA0MWRjIn0.ZakyNUGwI6TYTd-3ub8mppnmKGuZBsfvvaExyYSuYkA"
+}

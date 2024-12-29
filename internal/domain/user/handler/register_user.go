@@ -3,15 +3,12 @@ package handler
 import (
 	"context"
 	"errors"
-	"strings"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/r1005410078/meida-admin-server/internal/domain/shared"
 	"github.com/r1005410078/meida-admin-server/internal/domain/user"
 	"github.com/r1005410078/meida-admin-server/internal/domain/user/command"
 	"github.com/r1005410078/meida-admin-server/internal/domain/user/events"
-	"golang.org/x/crypto/bcrypt"
 )
 
 type RegisterUserHandler struct {
@@ -26,9 +23,15 @@ func NewRegisterUserHandler(repo user.IUserAggregateRepository, bus shared.IEven
 	}
 }
 
-func (h *RegisterUserHandler) Handle(ctx context.Context, cmd command.RegisterCommand) error {
-	// 密码缺少强弱检查， 必须要有字母长度8位以上
-	if err := h.checkPasswordStrength(cmd.Password); err != nil {
+func (h *RegisterUserHandler) Handle(ctx context.Context, cmd *command.RegisterCommand) error {
+
+	// 创建用户
+	aggregate, err := user.New(user.UserAggregate{
+		Username:  &cmd.Username,
+		Email:     &cmd.Email,
+	})
+
+	if err != nil {
 		failedEvent := &events.RegisterFailedEvent{
 			Username:  cmd.Username,
 			Email:     cmd.Email,
@@ -105,25 +108,10 @@ func (h *RegisterUserHandler) Handle(ctx context.Context, cmd command.RegisterCo
 		return errors.New("email already exists")
 	}
 
-	// 加密密码
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(cmd.Password), bcrypt.DefaultCost)
-	if err != nil {
-		failedEvent := &events.RegisterFailedEvent{
-			Username:  cmd.Username,
-			Email:     cmd.Email,
-			Error:     err.Error(),
-			Timestamp: time.Now(),
-		}
-		if err := h.bus.Dispatch(failedEvent); err != nil {
-			return err
-		}
-		return err
-	}
-
-	// 创建用户
-	hashedPasswordString := string(hashedPassword)
-	aggregate := user.NewUserAggregate(&cmd.Username, &cmd.Email, &hashedPasswordString)
+	// 保存聚合
+	h.repo.Begin()
 	if err := h.repo.SaveUserAggregate(aggregate); err != nil {
+		h.repo.Rollback()
 		failedEvent := &events.RegisterFailedEvent{
 			Username:  cmd.Username,
 			Email:     cmd.Email,
@@ -138,26 +126,17 @@ func (h *RegisterUserHandler) Handle(ctx context.Context, cmd command.RegisterCo
 
 	// 发布注册成功事件
 	registeredEvent := &events.RegisteredEvent{
-		ID:        uuid.New().String(),
+		ID:        *aggregate.UserId,
 		Username:  cmd.Username,
 		Email:     cmd.Email,
 		CreatedAt: time.Now(),
 	}
 	
 	if err := h.bus.Dispatch(registeredEvent); err != nil {
+		h.repo.Rollback()
 		return err
 	}
 
-	return nil
+	return h.repo.Commit()
 }
 
-/** 密码强弱检查 **/
-func (h *RegisterUserHandler) checkPasswordStrength(password string) error {
-	if len(password) < 8 {
-		return errors.New("密码长度必须至少为 8 个字符")
-	}
-	if !strings.ContainsAny(password, "abcdefghijklmnopqrstuvwxyz") {
-		return errors.New("密码必须至少包含一个小写字母")
-	}
-	return nil
-}

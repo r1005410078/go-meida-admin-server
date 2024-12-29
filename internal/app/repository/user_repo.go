@@ -23,8 +23,10 @@ type IUserRepository interface {
 	FindUserByEmail(email string) (*model.User, error)
 	// 保存Email验证码
 	SaveEmailCode(email string, code string) error
+	// 获取验证码
+	GetEmailCode(email *string) *string
 	// 保存登陆token
-	SaveLoginToken(userId string, token string) error
+	SaveLoginToken(userId *string) error
 	// 删除登陆token
 	DeleteLoginToken(userId *string) error
 }

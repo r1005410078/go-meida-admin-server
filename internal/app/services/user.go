@@ -3,12 +3,12 @@ package services
 import (
 	"errors"
 	"fmt"
-	"net/smtp"
 	"strconv"
 	"time"
 
 	"math/rand"
 
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/jordan-wright/email"
 	"github.com/r1005410078/meida-admin-server/internal/app/repository"
 	"github.com/r1005410078/meida-admin-server/internal/domain/user/events"
@@ -86,13 +86,12 @@ func (u *UserServices) FindUserByEmail(email string) (*model.User, error) {
 }
 
 // 给邮箱发送验证码
-func (u *UserServices) SendEmailCode(username, input_email, code string) (*string, error) {
-	if input_email == "" {
-		return nil, errors.New("email is empty")
+func (u *UserServices) SendEmailCode(targetMailBox string) error {
+	if code := u.repo.GetEmailCode(&targetMailBox); code != nil && *code != "" {
+		return errors.New("email 已经发送，请稍后再试")
 	}
 
 	emailCode := generateCaptcha(6)
-	targetMailBox := "1005410788@qq.com"          // 目标邮箱
 	smtpServer := "smtp.163.com" 									// smtp服务器
 	emailAddr := "rongtaosheng88@163.com"         // 要发件的邮箱地址
 	smtpKey := "DHUfbbvFd97D5PnU"                 // 获取的smtp密钥
@@ -108,19 +107,19 @@ func (u *UserServices) SendEmailCode(username, input_email, code string) (*strin
 
 	// 调用接口发送邮件
   // 此处端口号不一定为25使用对应邮箱时需要具体更换
-	em.Send(smtpServer+":25", smtp.PlainAuth("", emailAddr, smtpKey, smtpServer))
-
+	// em.Send(smtpServer+":25", smtp.PlainAuth("", emailAddr, smtpKey, smtpServer))
+  println("send email to: ", smtpServer, smtpKey)
 	// 保存验证码
-  if err := u.repo.SaveEmailCode(input_email, emailCode); err != nil {
-		return nil, err
+  if err := u.repo.SaveEmailCode(targetMailBox, emailCode); err != nil {
+		return  err
 	}
 
-	return &emailCode, nil
+	return nil
 }
 
 // 登陆成功事件
-func (u *UserServices) LoginSuccessEventHandle(event *events.LoggedInEvent) error {
-	if err := u.repo.SaveLoginToken(*event.ID, generateCaptcha(32)); err != nil {
+func (u *UserServices) LoginInEventHandle(event *events.LoggedInEvent) error {
+	if err := u.repo.SaveLoginToken(event.ID); err != nil {
 		return err
 	}
 
@@ -130,7 +129,7 @@ func (u *UserServices) LoginSuccessEventHandle(event *events.LoggedInEvent) erro
 
 // 登陆失败
 func (u *UserServices) LoginFailedEventHandle(event *events.LoginFailedEvent) error {
-	u.logger.Error(fmt.Sprintf("user %s login failed %s", event.Username, event.Error))
+	u.logger.Error(fmt.Sprintf("user %s login failed %s", event.Username, event.Err))
 	return nil
 }
 
@@ -149,7 +148,7 @@ func (u *UserServices) LogoutFailedEventHandle(event *events.LoggedOutFailedEven
 }
 
 // 注册成功
-func (u *UserServices) RegisterCommandEventHandle(event *events.RegisteredEvent) error {
+func (u *UserServices) RegisterEventEventHandle(event *events.RegisteredEvent) error {
 	u.logger.Info(fmt.Sprintf("user %s register success", event.Username))
 	if err := u.repo.SaveUser(&events.SaveUserEvent {
 		ID:        &event.ID,
@@ -158,14 +157,38 @@ func (u *UserServices) RegisterCommandEventHandle(event *events.RegisteredEvent)
 	}); err != nil {
 		return err
 	}
+	
 	return nil
 }
 
 // 注册失败
-func (u *UserServices) RegisterFailedCommandEventHandle(event *events.RegisterFailedEvent) error {
+func (u *UserServices) RegisterFailedEventHandle(event *events.RegisterFailedEvent) error {
 	u.logger.Error(fmt.Sprintf("user %s register failed %s", event.Username, event.Error))
 	return nil
 }
+
+// 刷新登陆
+func (u *UserServices) RefreshLoginToken(tokenString string) error {
+	token, err := jwt.Parse(tokenString, func(t *jwt.Token) (interface{}, error) {
+		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
+		}
+		
+		return []byte("secret"), nil
+	})
+
+	if err != nil {
+		return err
+	}
+
+	if claims, ok := token.Claims.(jwt.MapClaims); ok {
+		id := claims["id"].(string) 
+		u.repo.SaveLoginToken(&id)
+	}
+
+	return nil
+}
+
 
 func generateCaptcha(length int) string {
 	rand.New(rand.NewSource(time.Now().UnixNano()))// 设置随机数种子

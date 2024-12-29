@@ -17,7 +17,7 @@ type SaveUserCommand struct {
 	Gender            *string            `json:"gender"`              // 性别
 	Birthday          *time.Time         `json:"birthday"`            // 出生日期
 	Address           *string            `json:"address"`             // 地址
-	PasswordHash      *string            `json:"password_hash"`      // 密码哈希
+	Password          *string            `json:"password"`            // 密码哈希
 	Status            *string            `json:"status"`              // 账户状态
 	RoleId            *string            `json:"role"`               // 用户角色
 	Preferences       *map[string]string `json:"preferences"`         // 用户偏好设置
@@ -35,7 +35,7 @@ func (command *SaveUserCommand) ToEvent() *events.SaveUserEvent {
 		Gender:            command.Gender,
 		Birthday:          command.Birthday,
 		Address:           command.Address,
-		PasswordHash:      command.PasswordHash,
+		PasswordHash:      command.Password,
 		Status:            command.Status,
 		RoleId:            command.RoleId,
 		Preferences:       command.Preferences,

@@ -9,9 +9,9 @@ type LoggedInEvent struct {
 }
 
 type LoginFailedEvent struct {
-	Username  string    `json:"username"`
-	Error     string    `json:"error"`
-	Timestamp time.Time `json:"timestamp"`
-	IP        string    `json:"ip"`
-	Attempts  int32       `json:"attempts"`
+	Username  string   
+	Err     error	   
+	Timestamp time.Time 
+	IP        string    
+	LoginAttempts  int32       
 }

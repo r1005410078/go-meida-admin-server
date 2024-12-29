@@ -29,14 +29,25 @@ func (h *SaveUserCommandHandler) Handle(command *command.SaveUserCommand) error 
 	
 	var aggregate *user.UserAggregate
 
+
 	if command.ID == nil {
 		// 用户名和手机号已经存在
 		if h.repo.ExistUser(command.Username) {
 			return h.eventBus.Dispatch(events.NewSaveUserFailedEvent(command.ToEvent(), errors.New("user already exists")))
 		}
 		
+		var err error
 		// 创建聚合
-		aggregate = user.NewUserAggregate(command.Username, command.Phone, command.Status)
+		aggregate, err = user.New(user.UserAggregate{
+			Username: command.Username,
+			Phone: command.Phone,
+			Email: command.Email,
+		})
+
+		if err != nil {
+			h.eventBus.Dispatch(events.NewSaveUserFailedEvent(command.ToEvent(), err))
+			return err
+		}
 	} else {
 		var err error
 		aggregate, err = h.repo.GetUserAggregate(command.ID)
@@ -51,23 +62,23 @@ func (h *SaveUserCommandHandler) Handle(command *command.SaveUserCommand) error 
 	}
 
 	// 开事务保存用户聚合
-	tx := h.repo.Begin()
+	h.repo.Begin()
 	if err := h.repo.SaveUserAggregate(aggregate); err != nil {
-		tx.Rollback()
+		h.repo.Rollback()
 		return err
 	}
 
 	// 发布保存用户事件
 	command.ID = aggregate.UserId
 	if err := h.eventBus.Dispatch(command.ToEvent()); err != nil {
-		tx.Rollback()
+		h.repo.Rollback()
 		return err
 	}
 
 	// 如果有状态变化，发布更新状态事件
 	if command.Status != nil {
 		if err := h.eventBus.Dispatch(&events.UserStatusEvent {Id: *aggregate.UserId, Status: command.Status}); err != nil {
-			tx.Rollback()
+			h.repo.Rollback()
 			return err
 		} 
 	}
@@ -75,10 +86,10 @@ func (h *SaveUserCommandHandler) Handle(command *command.SaveUserCommand) error 
 	// 如果有角色变化，发布更新角色事件
 	if command.RoleId != nil  {
 		if err := h.eventBus.Dispatch(&events.AssoicatedRolesEvent{UserId: *aggregate.UserId, RoleId: *command.RoleId }); err != nil {
-			tx.Rollback()
+			h.repo.Rollback()
 			return err
 		}
 	}
 
-	return tx.Commit().Error
+	return h.repo.Commit()
 }

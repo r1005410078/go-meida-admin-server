@@ -1,12 +1,14 @@
 package user
 
-import (
-	"gorm.io/gorm"
-)
-
 type IUserAggregateRepository interface {
 	// 开启事务
-	Begin() *gorm.DB
+	Begin()
+
+	// 回滚
+	Rollback()
+
+	// commit
+	Commit() error
 
 	// 是否是管理员
 	IsAdmin() bool
@@ -40,6 +42,5 @@ type IUserAggregateRepository interface {
 
 	// 获取用户信息
 	GetUserAggregateByUsername(username string) (*UserAggregate, error)
-
 }
 

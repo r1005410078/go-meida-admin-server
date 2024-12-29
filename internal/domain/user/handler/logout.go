@@ -41,17 +41,17 @@ func (h *LogoutUserHandler) Handle(ctx *gin.Context, cmd command.LoggedOutComman
 	aggregate.LoggedOut()
 
 	// 保存聚合
-	tx := h.repo.Begin()
+	h.repo.Begin()
 	if err := h.repo.SaveUserAggregate(aggregate); err != nil {
-		tx.Rollback()
+		h.repo.Rollback()
 		return err
 	}
 
 	// 发布事件
 	if err := h.eventBus.Dispatch(&events.LoggedOutEvent{UserId: cmd.UserId}); err != nil {
-		tx.Rollback()
+		h.repo.Rollback()
 		return err
 	}
 
-	return tx.Commit().Error
+	return h.repo.Commit()
 }

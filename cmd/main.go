@@ -116,6 +116,14 @@ func main() {
 	bus.Register(userServices.AssoicatedRolesFailedEventHandle)
 	bus.Register(userServices.SaveUserStatusEventHandle)
 	bus.Register(userServices.SaveUserStatusFailedEventHandle)
+
+	// 注册用户注册事件处理器
+	bus.Register(userServices.RegisterEventEventHandle)
+	bus.Register(userServices.RegisterFailedEventHandle)
+	bus.Register(userServices.LoginInEventHandle)
+	bus.Register(userServices.LoginFailedEventHandle)
+	bus.Register(userServices.LogoutEventHandle)
+	bus.Register(userServices.LogoutFailedEventHandle)
 	
 	// 初始化权限处理器
 	userPermissionsHandlers := http.NewUserPermissionsHandlers(
@@ -148,6 +156,13 @@ func main() {
 	userRouter.DELETE("/delete/:id", userHttpHandlers.DeleteUser)
 	userRouter.POST("/status", userHttpHandlers.SaveUserStatus)
 	userRouter.POST("/associated-roles", userHttpHandlers.AssoicatedRoles)
+	userRouter.POST("/register", userHttpHandlers.RegisterUserHandler)
+	userRouter.POST("/login", userHttpHandlers.LoginUserHandler)
+	userRouter.POST("/logout", userHttpHandlers.LogoutUserHandler)
+
+	// 发送验证码
+	userRouter.POST("/send-verify-code", userHttpHandlers.SendVerifyCodeHandler)
+	userRouter.POST("/refresh-token", userHttpHandlers.RefreshTokenHandler)
 
 	// 启动 Gin
 	if err := r.Run(":8080"); err != nil {

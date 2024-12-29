@@ -44,10 +44,10 @@ func (h *AssoicatedRolesCommandHandler) Handle(command *command.AssociatedRolesC
 		return err
 	}
 
-	tx := h.repo.Begin()
+	h.repo.Begin()
 	// 开启事务保存聚合
 	if err := h.repo.SaveUserAggregate(aggregate); err != nil {
-		tx.Rollback()
+		h.repo.Rollback()
 		return err
 	}
 
@@ -56,5 +56,5 @@ func (h *AssoicatedRolesCommandHandler) Handle(command *command.AssociatedRolesC
 		return err
 	}
 
-	return tx.Commit().Error
+	return h.repo.Commit()
 }

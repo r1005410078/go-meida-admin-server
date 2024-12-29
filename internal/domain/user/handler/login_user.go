@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -23,53 +24,62 @@ func NewLoginUserHandler(repo user.IUserAggregateRepository, eventBus shared.IEv
 	}
 }
 
-func (h *LoginUserHandler) Handle(ctx *gin.Context, cmd command.LoginInCommand) error {
+func (h *LoginUserHandler) Handle(ctx *gin.Context, cmd *command.LoginInCommand) error {
 	// 获取聚合信息
 	aggregate, err := h.repo.GetUserAggregateByUsername(cmd.Username)
 	if err != nil {
 		h.eventBus.Dispatch(&events.LoginFailedEvent{
 			Username:  cmd.Username,
-			Error:     "user not found",
+			Err:     errors.New("user not found"),
 			Timestamp: time.Now(),
 			IP:        h.getClientIP(ctx),
-			Attempts:  aggregate.GetAttempts(),
+			LoginAttempts:  aggregate.GetLoginAttempts(),
 		})
-		return err
+
+		return errors.New("账号或密码错误")
 	}
 
+	// 检查用户状态
+	if err := aggregate.CheckStatusActive(); err != nil {
+		 h.eventBus.Dispatch(&events.LoginFailedEvent	{
+			Username:  cmd.Username,
+			Err:    errors.New("用户重试次数过多"),
+			Timestamp: time.Now(),
+			IP:        h.getClientIP(ctx),
+			LoginAttempts:  aggregate.GetLoginAttempts(),
+		})
+
+		return errors.New("用户重试次数过多，账号被锁定，24个小时后重试")
+	}
+		
 	// 验证密码
 	if err := bcrypt.CompareHashAndPassword([]byte(*aggregate.PasswordHash), []byte(cmd.Password)); err != nil {
 		// 密码错误
 		aggregate.LoginFailed()
+		// 保存聚合
+		if err := h.repo.SaveUserAggregate(aggregate); err != nil {
+			return err
+		}
+
 		h.eventBus.Dispatch(&events.LoginFailedEvent{
 			Username:  cmd.Username,
-			Error:     "invalid password",
+			Err:     		err,
 			Timestamp: time.Now(),
 			IP:        h.getClientIP(ctx),
-			Attempts:  aggregate.GetAttempts(),
+			LoginAttempts:  aggregate.GetLoginAttempts(),
 		})
 
-		return err
+		return errors.New("账号或密码错误")
 	}
  
-	// 检查用户状态
-	if err := aggregate.CheckStatusActive(); err != nil {
-		return h.eventBus.Dispatch(&events.LoginFailedEvent	{
-			Username:  cmd.Username,
-			Error:     "user is not active",
-			Timestamp: time.Now(),
-			IP:        h.getClientIP(ctx),
-			Attempts:  aggregate.GetAttempts(),
-		})
-	}
 
 	// 重置登录尝试次数
 	aggregate.LoggedIn()
 	
 	// 保存聚合
-	tx := h.repo.Begin()
+  h.repo.Begin()
 	if err := h.repo.SaveUserAggregate(aggregate); err != nil {
-		tx.Rollback()
+		h.repo.Rollback()
 		return err
 	}
 
@@ -79,11 +89,11 @@ func (h *LoginUserHandler) Handle(ctx *gin.Context, cmd command.LoginInCommand) 
 		Username:  aggregate.Username,
 		LoginTime: time.Now(),
 	}); err != nil {
-		tx.Rollback()
+		h.repo.Rollback()
 		return err
 	}
 
-	return tx.Commit().Error
+	return h.repo.Commit()
 }
 
 func (h *LoginUserHandler) getClientIP(ctx *gin.Context) string {

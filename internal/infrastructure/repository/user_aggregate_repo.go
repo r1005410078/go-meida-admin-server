@@ -3,7 +3,6 @@ package repository
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"github.com/r1005410078/meida-admin-server/internal/domain/user"
 	"github.com/r1005410078/meida-admin-server/internal/infrastructure/dao/model"
@@ -39,9 +38,22 @@ func (r *UserAggregateRepository) dbInstance() *gorm.DB {
 }
 
 // Begin 开启事务
-func (r *UserAggregateRepository) Begin() *gorm.DB {
+func (r *UserAggregateRepository) Begin() {
 	r.tx = r.db.Begin()
-	return r.tx
+}
+
+// Rollback 回滚
+func (r *UserAggregateRepository) Rollback() {
+	if r.tx != nil {
+		r.tx.Rollback()
+	}
+}
+
+// Commit 提交
+func (r *UserAggregateRepository) Commit() error {
+	err := r.tx.Commit().Error	 
+	r.tx = nil
+	return err	 
 }
 
 // IsAdmin 检查是否为管理员
@@ -94,7 +106,7 @@ func (r *UserAggregateRepository) GetUserAggregate(userId *string) (*user.UserAg
 		LastLoginAt:   userModel.LastLoginAt,
 		LastLogoutAt:  userModel.LastLogoutAt,
 		LoginFailedAt: userModel.LoginFailedAt,
-		Attempts:      userModel.Attempts,
+		LoginAttempts:      userModel.LoginAttempts,
 	}, nil
 }
 
@@ -113,7 +125,7 @@ func (r *UserAggregateRepository) SaveUserAggregate(aggregate *user.UserAggregat
 	userModel.LastLoginAt = aggregate.LastLoginAt
 	userModel.LastLogoutAt = aggregate.LastLogoutAt
 	userModel.LoginFailedAt = aggregate.LoginFailedAt
-	userModel.Attempts = aggregate.Attempts
+	userModel.LoginAttempts = aggregate.LoginAttempts
 
 	// 使用 Updates 进行条件更新，如果记录不存在则创建
 	result := db.Model(&model.UserAggregate{}).Where("user_id = ?", userModel.UserID).Updates(userModel)
@@ -122,7 +134,7 @@ func (r *UserAggregateRepository) SaveUserAggregate(aggregate *user.UserAggregat
 	}
 
 	if result.RowsAffected == 0 {
-		return r.db.Create(&userModel).Error
+		return db.Create(&userModel).Error
 	}
 
 	return nil
@@ -143,19 +155,17 @@ func derefOr[T any](ptr *T, defaultValue T) T {
 }
 
 // 验证邮箱验证码
-func (r *UserAggregateRepository)	VerifyEmailCode(userId string, code string) error {
+func (r *UserAggregateRepository)	VerifyEmailCode(email string, code string) error {
 	rdb := r.redis
-	val, err := rdb.Get(context.Background(), "email_valid_code:"+userId).Result()
+	val, err := rdb.Get(context.Background(), "email:"+email).Result()
 	if err == redis.Nil {
-		return errors.New("name does not exist")
+		return errors.New("验证码失效")
 	} else if err != nil {
 		return errors.New("redis error" + err.Error())  
-	} else {
-		fmt.Println("name", val)
 	}
 
 	if val != code {
-		return errors.New("code is not valid")
+		return errors.New("验证码错误")
 	}
 
 	return nil
@@ -199,6 +209,6 @@ func(r *UserAggregateRepository) GetUserAggregateByUsername(username string) (*u
 		LastLoginAt:   userAggregate.LastLoginAt,
 		LastLogoutAt:  userAggregate.LastLogoutAt,
 		LoginFailedAt: userAggregate.LoginFailedAt,
-		Attempts:      userAggregate.Attempts,
+		LoginAttempts:      userAggregate.LoginAttempts,
 	}, nil
 }

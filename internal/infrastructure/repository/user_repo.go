@@ -3,7 +3,9 @@ package repository
 import (
 	"context"
 	"errors"
+	"time"
 
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/r1005410078/meida-admin-server/internal/domain/user/events"
 	"github.com/r1005410078/meida-admin-server/internal/infrastructure/dao/model"
 	"github.com/redis/go-redis/v9"
@@ -126,21 +128,39 @@ func (r *UserRepository) FindUserByEmail(email string) (*model.User, error) {
 }
 
 // 保存Email验证码
-func (r *UserRepository)  SaveEmailCode(email string, code string) error {
-	return r.db.Model(&model.User{}).
-		Where("email = ?", email).
-		Update("email_code", code).
-		Error
-}
-
-// 保存登陆token
-func (r *UserRepository)  SaveLoginToken(userId string, token string) error {
-	if err := r.redisDb.Set(r.ctx, "token:"+userId, token, 0).Err(); err != nil {
+func (r *UserRepository) SaveEmailCode(email string, code string) error {
+	if err := r.redisDb.Set(r.ctx, "email:"+email, code, 1 * time.Minute).Err(); err != nil {
 		return err
 	}
 
 	return nil
 }
+
+// 获取验证码
+func (r *UserRepository) GetEmailCode(email *string) *string {
+	val, _ := r.redisDb.Get(r.ctx, "email:"+*email).Result()
+	return &val
+}
+
+// 保存登陆token
+func (r *UserRepository) SaveLoginToken(userId *string) error {
+	// jwt
+	token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"id": userId,
+		"exp": time.Now().Add(time.Hour * 24).Unix(),
+	}).SignedString([]byte("secret"))
+
+	if err != nil {
+		return err
+	}
+
+	if err := r.redisDb.Set(r.ctx, "token:"+*userId, token, 24 * time.Hour).Err(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // 删除登陆token
 func (r *UserRepository) DeleteLoginToken(userId *string) error {
 	if err := r.redisDb.Del(r.ctx, "token:"+*userId).Err(); err != nil {
