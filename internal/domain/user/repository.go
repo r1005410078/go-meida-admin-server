@@ -1,6 +1,8 @@
 package user
 
-import "gorm.io/gorm"
+import (
+	"gorm.io/gorm"
+)
 
 type IUserAggregateRepository interface {
 	// 开启事务
@@ -12,7 +14,7 @@ type IUserAggregateRepository interface {
 	// 用户ID是否存在
 	ExistUserId(userId *string) bool
 
-  // 用户名称是否存在
+	// 用户名称是否存在
 	ExistUser(name *string) bool
 
 	// 是否存在角色
@@ -26,5 +28,18 @@ type IUserAggregateRepository interface {
 
 	// 删除聚合
 	DeleteUserAggregate(userId *string) error
+
+	// 验证邮箱验证码
+	VerifyEmailCode(userId string, code string) error
+
+	// 检查用户名是否已存在
+	ExistsByUsername(username string) (bool, error)
+
+	// 检查邮箱是否已存在
+	ExistsByEmail(email string) (bool, error)
+
+	// 获取用户信息
+	GetUserAggregateByUsername(username string) (*UserAggregate, error)
+
 }
 

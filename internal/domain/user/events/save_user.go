@@ -4,7 +4,7 @@ import "time"
 
 type SaveUserEvent struct {
 	ID                *string                   // 用户唯一标识
-	Username          *string          	       // 用户名
+	Username          *string          	        // 用户名
 	Email             *string                   // 邮箱
 	Phone             *string                   // 手机号
 	FullName          *string                   // 全名

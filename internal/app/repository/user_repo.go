@@ -19,4 +19,12 @@ type IUserRepository interface {
 	SaveUser(event *events.SaveUserEvent) error
 	// 保存用户状态
 	SaveUserStatus(user *events.UserStatusEvent) error
+	// 根据邮箱获取用户
+	FindUserByEmail(email string) (*model.User, error)
+	// 保存Email验证码
+	SaveEmailCode(email string, code string) error
+	// 保存登陆token
+	SaveLoginToken(userId string, token string) error
+	// 删除登陆token
+	DeleteLoginToken(userId *string) error
 }

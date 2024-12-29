@@ -1,21 +1,25 @@
 package repository
 
 import (
+	"context"
 	"errors"
 
 	"github.com/r1005410078/meida-admin-server/internal/domain/user/events"
 	"github.com/r1005410078/meida-admin-server/internal/infrastructure/dao/model"
+	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 )
 
 // UserRepository 实现用户仓储接口
 type UserRepository struct {
 	db *gorm.DB
+	redisDb *redis.Client
+	ctx context.Context
 }
 
 // NewUserRepository 创建用户仓储实例
-func NewUserRepository(db *gorm.DB) *UserRepository {
-	return &UserRepository{db: db}
+func NewUserRepository(db *gorm.DB, redisDb *redis.Client, ctx context.Context) *UserRepository {
+	return &UserRepository{db: db, redisDb: redisDb, ctx: ctx}
 }
 
 // FindById 根据ID查找用户
@@ -109,4 +113,39 @@ func (r *UserRepository) SaveUserStatus(event *events.UserStatusEvent) error {
 		Where("id = ?", event.Id).
 		Update("status", event.Status).
 		Error
+}
+
+
+// 根据邮箱获取用户
+func (r *UserRepository) FindUserByEmail(email string) (*model.User, error) {
+	var user model.User
+	if err := r.db.Where("email = ?", email).First(&user).Error; err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
+// 保存Email验证码
+func (r *UserRepository)  SaveEmailCode(email string, code string) error {
+	return r.db.Model(&model.User{}).
+		Where("email = ?", email).
+		Update("email_code", code).
+		Error
+}
+
+// 保存登陆token
+func (r *UserRepository)  SaveLoginToken(userId string, token string) error {
+	if err := r.redisDb.Set(r.ctx, "token:"+userId, token, 0).Err(); err != nil {
+		return err
+	}
+
+	return nil
+}
+// 删除登陆token
+func (r *UserRepository) DeleteLoginToken(userId *string) error {
+	if err := r.redisDb.Del(r.ctx, "token:"+*userId).Err(); err != nil {
+		return err
+	}	
+
+	return nil
 }

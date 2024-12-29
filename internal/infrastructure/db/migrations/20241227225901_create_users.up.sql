@@ -28,12 +28,16 @@ CREATE TABLE IF NOT EXISTS users (
 -- 创建user聚合表，用于DDD聚合根存储
 CREATE TABLE IF NOT EXISTS user_aggregate (
     user_id VARCHAR(255) PRIMARY KEY,               -- 用户聚合根ID
-    username VARCHAR(255) NOT NULL,                 -- 用户名
+    username VARCHAR(255) NOT NULL unique,          -- 用户名
+    email VARCHAR(255) unique,                      -- 邮箱
     password_hash VARCHAR(255) NOT NULL,            -- 密码哈希值
     role VARCHAR(50),                               -- 用户角色
     status VARCHAR(50),                             -- 用户状态（如：active, inactive, blocked等）
     deleted_at TIMESTAMP,                           -- 软删除时间戳
+    last_login_at TIMESTAMP,                        -- 最后登录时间
+    last_logout_at TIMESTAMP,                       -- 最后登出时间
+    login_failed_at TIMESTAMP,                      -- 最后登录失败时间
+    attempts INTEGER DEFAULT 0,                     -- 登录尝试次数
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,    -- 创建时间
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP on update current_timestamp,    -- 更新时间
-    UNIQUE (username, deleted_at)                   -- 用户名在未删除状态下唯一
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP on update current_timestamp    -- 更新时间
 );

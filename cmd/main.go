@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log"
 	"os"
 	"path/filepath"
@@ -13,6 +14,7 @@ import (
 	"github.com/r1005410078/meida-admin-server/internal/infrastructure/repository"
 	"github.com/r1005410078/meida-admin-server/internal/interfaces/http"
 	"github.com/r1005410078/meida-admin-server/internal/interfaces/shared"
+	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -81,13 +83,19 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
+	redisDb := redis.NewClient(&redis.Options{
+		Addr:	  "localhost:6379",
+		Password: "rts2778205", // no password set
+		DB:		  0,  // use default DB
+	})
 	
 	// 初始化角色服务
 	roleRepo := repository.NewRoleRepository(mysqlDb)
 	roleServices := services.NewRepoServices(roleRepo, logger)
 
 	// 初始化用户服务
-	userRepo := repository.NewUserRepository(mysqlDb)
+	userRepo := repository.NewUserRepository(mysqlDb, redisDb, context.Background())
 	userServices := services.NewUserServices(userRepo, logger)
 
 	// 注册事件总线
@@ -133,14 +141,13 @@ func main() {
 	roleRouter.POST("/delete-permission", roleHttpHandlers.DeleteRolePermission)
 
 	// 用户路由
-	userHttpHandlers := http.NewUserHandlers(repository.NewUserAggregateRepository(mysqlDb, true), bus, userServices)
+	userHttpHandlers := http.NewUserHandlers(repository.NewUserAggregateRepository(mysqlDb, redisDb, true), bus, userServices)
 	userRouter := v1.Group("/user")
 	userRouter.POST("/save", userHttpHandlers.Save)
 	userRouter.GET("/list", userHttpHandlers.GetUserList)
 	userRouter.DELETE("/delete/:id", userHttpHandlers.DeleteUser)
 	userRouter.POST("/status", userHttpHandlers.SaveUserStatus)
 	userRouter.POST("/associated-roles", userHttpHandlers.AssoicatedRoles)
-	
 
 	// 启动 Gin
 	if err := r.Run(":8080"); err != nil {
