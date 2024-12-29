@@ -220,3 +220,4 @@
 {"level":"info","timestamp":"2024-12-29T21:49:31+08:00","caller":"reflect/value.go:581","func":"reflect.Value.call","message":"user test login success"}
 {"level":"info","timestamp":"2024-12-29T23:28:37+08:00","caller":"reflect/value.go:581","func":"reflect.Value.call","message":"user test login success"}
 {"level":"info","timestamp":"2024-12-29T23:30:28+08:00","caller":"reflect/value.go:581","func":"reflect.Value.call","message":"user test login success"}
+{"level":"info","timestamp":"2024-12-30T00:03:07+08:00","caller":"reflect/value.go:581","func":"reflect.Value.call","message":"user test login success"}

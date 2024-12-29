@@ -58,3 +58,10 @@ content-type: application/json
 {
   "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MzU1NzI1MTcsImlkIjoiOTJmZDJiYWItZjg4Yi00NDhjLTljZjQtNjRhNDg4NTA0MWRjIn0.ZakyNUGwI6TYTd-3ub8mppnmKGuZBsfvvaExyYSuYkA"
 }
+
+### 退出
+POST http://localhost:8080/v1/user/logout
+
+{
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MzU1NzI1MTcsImlkIjoiOTJmZDJiYWItZjg4Yi00NDhjLTljZjQtNjRhNDg4NTA0MWRjIn0.ZakyNUGwI6TYTd-3ub8mppnmKGuZBsfvvaExyYSuYkA"
+}

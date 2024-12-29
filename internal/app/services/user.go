@@ -143,7 +143,7 @@ func (u *UserServices) LogoutEventHandle(event *events.LoggedOutEvent) error {
 
 // 退出登录失败
 func (u *UserServices) LogoutFailedEventHandle(event *events.LoggedOutFailedEvent) error {
-	u.logger.Error(fmt.Sprintf("user %s logout failed %s", event.UserId, event.Err))
+	u.logger.Error(fmt.Sprintf("user %s logout failed %s", event.Token, event.Err))
 	return nil
 }
 
@@ -169,7 +169,17 @@ func (u *UserServices) RegisterFailedEventHandle(event *events.RegisterFailedEve
 
 // 刷新登陆
 func (u *UserServices) RefreshLoginToken(tokenString string) error {
-	token, err := jwt.Parse(tokenString, func(t *jwt.Token) (interface{}, error) {
+	var userId *string
+	var err error
+	if userId, err = u.GetUserIdByToken(tokenString); err != nil { 
+		return err 
+	}
+
+	return u.repo.SaveLoginToken(userId)
+}
+
+func (u *UserServices) GetUserIdByToken(Token string) (*string, error) {
+	token, err := jwt.Parse(Token, func(t *jwt.Token) (interface{}, error) {
 		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
 		}
@@ -178,15 +188,20 @@ func (u *UserServices) RefreshLoginToken(tokenString string) error {
 	})
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
+	var userId *string
 	if claims, ok := token.Claims.(jwt.MapClaims); ok {
 		id := claims["id"].(string) 
-		u.repo.SaveLoginToken(&id)
+		userId = &id
 	}
 
-	return nil
+	if userId == nil {
+		return nil, errors.New("Token无效")
+	}
+
+	return userId, nil
 }
 
 

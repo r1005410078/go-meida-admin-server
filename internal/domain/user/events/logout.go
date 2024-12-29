@@ -5,6 +5,7 @@ type LoggedOutEvent struct {
 }
 
 type LoggedOutFailedEvent struct {
+	Token string
 	UserId string
 	Err    error
 }

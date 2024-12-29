@@ -32,7 +32,7 @@ func (h *LogoutUserHandler) Handle(ctx *gin.Context, cmd command.LoggedOutComman
 
 	if aggregate == nil {
 		err := errors.New("用户不存在")
-		h.eventBus.Dispatch(&events.LoggedOutFailedEvent{UserId: cmd.UserId, Err: err})
+		h.eventBus.Dispatch(&events.LoggedOutFailedEvent{Token: cmd.Token, UserId: cmd.UserId, Err: err})
 		// 聚合不存在，退出失败
 		return err
 	}
@@ -48,7 +48,7 @@ func (h *LogoutUserHandler) Handle(ctx *gin.Context, cmd command.LoggedOutComman
 	}
 
 	// 发布事件
-	if err := h.eventBus.Dispatch(&events.LoggedOutEvent{UserId: cmd.UserId}); err != nil {
+	if err := h.eventBus.Dispatch(&events.LoggedOutEvent{UserId: *aggregate.UserId}); err != nil {
 		h.repo.Rollback()
 		return err
 	}

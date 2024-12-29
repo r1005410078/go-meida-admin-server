@@ -1,6 +1,7 @@
 package command
 
 type LoggedOutCommand struct {
-	UserId string
+	Token string `json:"token" binding:"required"`
+	UserId string `json:"user_id"`
 }
 

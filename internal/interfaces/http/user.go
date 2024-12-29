@@ -171,11 +171,17 @@ func (h *UserHttpHandlers) LoginUserHandler(c *gin.Context) {
 // 退出
 func (h *UserHttpHandlers) LogoutUserHandler(c *gin.Context) {
 	var body command.LoggedOutCommand
+
 	if err := c.ShouldBindJSON(&body); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"message": err.Error(),
 		})
 		return
+	}
+
+	// 获取用户id
+	if userId, err := h.server.GetUserIdByToken(body.Token) ; err == nil {
+		body.UserId = *userId
 	}
 
 	if err := handler.NewLogoutUserHandler(h.aggregateRepo, h.eventBus).Handle(c, body); err != nil {

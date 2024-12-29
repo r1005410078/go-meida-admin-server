@@ -40,7 +40,6 @@ func (h *ChangePasswordHandler) Handle(command *command.ChangePasswordCommand) e
 		// 聚合不存在，退出失败
 		return err
 	}
-
 	
 	if err := aggregate.ChangePassword(command); err != nil {
 		h.eventBus.Dispatch(events.NewChangePasswordFailedEvent(changePasswordEvent, err))
