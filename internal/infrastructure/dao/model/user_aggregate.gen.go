@@ -24,7 +24,7 @@ type UserAggregate struct {
 	LastLoginAt   *time.Time     `gorm:"column:last_login_at" json:"last_login_at"`
 	LastLogoutAt  *time.Time     `gorm:"column:last_logout_at" json:"last_logout_at"`
 	LoginFailedAt *time.Time     `gorm:"column:login_failed_at" json:"login_failed_at"`
-	LoginAttempts      *int32     `gorm:"column:login_attempts" json:"login_attempts"`
+	LoginAttempts *int32         `gorm:"column:login_attempts" json:"login_attempts"`
 	CreatedAt     time.Time      `gorm:"column:created_at;not null;default:CURRENT_TIMESTAMP" json:"created_at"`
 	UpdatedAt     time.Time      `gorm:"column:updated_at;not null;default:CURRENT_TIMESTAMP" json:"updated_at"`
 }
