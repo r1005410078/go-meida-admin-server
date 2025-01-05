@@ -2,10 +2,10 @@ package handler
 
 import (
 	"errors"
+	"slices"
 
 	"github.com/r1005410078/meida-admin-server/internal/domain/forms"
 	"github.com/r1005410078/meida-admin-server/internal/domain/forms/command"
-	"github.com/r1005410078/meida-admin-server/internal/domain/forms/events"
 	"github.com/r1005410078/meida-admin-server/internal/domain/shared"
 )
 
@@ -21,48 +21,47 @@ func NewSaveDependsOnCommandHandler(repo forms.IFormsAggregateRepository, busEve
 	}
 }
 
-func (h *SaveDependsOnCommandHandler) Handle(command *command.SaveDependsOnCommand) error {
-	
-  var dependsOnIds []string
-	
-	for _, v := range command.DependsOn {
-		dependsOnIds = append(dependsOnIds, v.FieldId)
-	}
-	
-	// 检查依赖表单是否存在
-	if !h.repo.ExistFieldIds(command.FormID, dependsOnIds) {
-		return errors.New("依赖表单不存在")
-	}
-	
+func (h *SaveDependsOnCommandHandler) Handle(cmd *command.SaveDependsOnCommand) error {
 	// 获取聚合
-	aggregate, err := h.repo.GetAggregate(&command.FormID, &command.FieldID)
+	aggregate, err := h.repo.GetAggregate(&cmd.FormID)
 	if err != nil {
 		return errors.New("关联失败，表单字段不存在")
 	}
-	
-	deleteDependsOn, appendDependsOn := aggregate.ResetDependsOn(command.DependsOn, &h.busEvent)
+
+	fields := aggregate.Fields
+
+	// 判断字段是否存在
+	existField := slices.ContainsFunc(fields, func(v forms.FormField) bool { return *v.FieldId == cmd.FieldID })
+	if !existField {
+		return errors.New("关联失败，表单字段不存在")
+	}
+
+	// 判断联动字段是否存在
+	for _, depend := range cmd.DependsOn {
+		existDependField := slices.ContainsFunc(fields, func(v forms.FormField) bool { return *v.FieldId == depend.FieldId })
+		if !existDependField {
+			return errors.New("关联失败，联动字段不存在")
+		}
+	}
 
 	h.repo.Begin()
 	defer h.repo.Commit()
-	
+
+	event, err := aggregate.SaveRelatedIds(cmd)
+	if err != nil {
+		return err
+	}
+
 	// 保存聚合
-	if err := h.repo.Save(aggregate); err != nil {
+	if err := h.repo.SaveAggregate(aggregate); err != nil {
 		h.repo.Rollback()
 		return err
 	}
-	
-	if len(appendDependsOn) > 0 {
-		if err := h.busEvent.Dispatch(&events.ApeendDependsOnEvent{SaveDependsOnCommand: command}); err != nil {
-			h.repo.Rollback()
-			return err
-		}
-	}
-	
-	if len(deleteDependsOn) > 0 {
-		if err := h.busEvent.Dispatch(&events.DeleteDependsOnEvent{SaveDependsOnCommand: command}); err != nil {
-			h.repo.Rollback()
-			return err
-		}
+
+	// 发布事件
+	if err := h.busEvent.Dispatch(event); err != nil {
+		h.repo.Rollback()
+		return err
 	}
 
 	return nil

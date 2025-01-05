@@ -124,7 +124,40 @@ func main() {
 	bus.Register(userServices.LoginFailedEventHandle)
 	bus.Register(userServices.LogoutEventHandle)
 	bus.Register(userServices.LogoutFailedEventHandle)
-	
+
+	// 初始化表单服务
+	formsAggregateRepo := repository.NewFormsAggregateRepository(mysqlDb)
+	formRepo := repository.NewFormsRepository(mysqlDb)
+	formServices := services.NewFormsServices(formRepo, logger)
+
+	// 初始化表单事件处理器
+	bus.Register(formServices.CreateFormsEventHandle)
+	bus.Register(formServices.UpdateFormsEventHandle)
+	bus.Register(formServices.SaveFormsFailedEventHandle)
+	bus.Register(formServices.DeleteFormsEventHandle)
+	bus.Register(formServices.DeleteFormsFailedEventHandle)
+	bus.Register(formServices.CreateFormsFieldsEventHanlde)
+	bus.Register(formServices.UpdateFormsFieldsEventHanlde)
+	bus.Register(formServices.DeleteFormsFiledsEventHanlde)
+	bus.Register(formServices.CreateFormsFiledsFailedEventHanlde)
+	bus.Register(formServices.UpdateFormsFieldsFailedEventHanlde)
+	bus.Register(formServices.DeleteFormsFiledsFailedEventHanlde)
+	bus.Register(formServices.CreateDependsOnEventHandle)
+	bus.Register(formServices.UpdateDependsOnEventHandle)
+	bus.Register(formServices.DeleteDependsOnEventHandle)
+
+	// 路由分组
+	v1 := r.Group("/v1")
+
+	// 初始化表单处理器
+	formsHandlers := http.NewFormsHandlers(formsAggregateRepo, bus, formServices)
+	formsRouter := v1.Group("/forms")
+	formsRouter.POST("/save", formsHandlers.SaveFormsHandler)
+	formsRouter.POST("/delete", formsHandlers.DeleteFormsHandler)
+	formsRouter.POST("/save-fields", formsHandlers.SaveFormsFieldsHandler)
+	formsRouter.POST("/delete-fields", formsHandlers.DeleteFormsFiledsHandler)
+	formsRouter.POST("/save-depends-on", formsHandlers.SaveDependsOnHandler)
+
 	// 初始化权限处理器
 	userPermissionsHandlers := http.NewUserPermissionsHandlers(
 		permissions.NewPermissionsService(
@@ -132,8 +165,6 @@ func main() {
 		),
 	)
 
-	// 路由分组
-	v1 := r.Group("/v1")
 
 	// 权限路由
 	permissionsRouter := v1.Group("/user-permissions")

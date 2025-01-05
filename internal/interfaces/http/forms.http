@@ -1,0 +1,92 @@
+## 新增表单
+POST http://127.0.0.1:8080/v1/forms/save
+User-Agent: vscode-restclient
+content-type: application/json
+
+{  "name": "测试", "description": "测试内容" }
+
+### 更新表单
+POST http://127.0.0.1:8080/v1/forms/save
+User-Agent: vscode-restclient
+content-type: application/json
+
+{  "id": "d4bf5fe4-7a97-4f80-a919-f32a7386cbba", "name": "哈哈哈", "description": "rongts11111" }
+
+### 删除表单
+POST http://127.0.0.1:8080/v1/forms/delete
+User-Agent: vscode-restclient
+content-type: application/json
+
+{  "id": "d4bf5fe4-7a97-4f80-a919-f32a7386cbba" }
+
+### 添加表单
+POST http://127.0.0.1:8080/v1/forms/save-fields
+User-Agent: vscode-restclient
+content-type: application/json
+
+{ 
+  "form_id": "5c012b30-cfe5-48df-b325-965d2862e710", 
+  "label": "测试",
+  "type": "input",
+  "required": true,
+  "placeholder": "请输入",
+  "dependsOn": []
+}
+
+### 更新表单
+POST http://127.0.0.1:8080/v1/forms/save-fields
+User-Agent: vscode-restclient
+content-type: application/json
+
+{ 
+  "form_id": "5c012b30-cfe5-48df-b325-965d2862e710", 
+  "field_id": "338076de-de9e-4919-96f4-3e0f9474de17",  
+  "label": "更新测试",
+  "type": "input",
+  "required": true,
+  "placeholder": "请输入",
+  "dependsOn": []
+}
+
+### 删除表单
+POST http://127.0.0.1:8080/v1/forms/delete-fields
+User-Agent: vscode-restclient
+content-type: application/json
+
+{ 
+  "form_id": "5c012b30-cfe5-48df-b325-965d2862e710", 
+  "field_id": "7365dd74-b32b-43a7-b51e-791a1afeed66"
+}
+
+### 关联表单
+POST http://127.0.0.1:8080/v1/forms/save-depends-on
+User-Agent: vscode-restclient
+content-type: application/json
+
+{
+  "form_id": "5c012b30-cfe5-48df-b325-965d2862e710", 
+  "field_id": "46dc8a9a-0799-4295-81f3-93003651920a",  
+  "dependsOn": [
+    {
+      "field_id": "46dc8a9a-0799-4295-81f3-93003651920a",
+      "value": "测试111"
+    }
+  ]
+}
+
+### 更新关联表单
+POST http://127.0.0.1:8080/v1/forms/save-depends-on
+User-Agent: vscode-restclient
+content-type: application/json
+
+{
+  "id": "d8fb3624-9453-475d-b691-84ac9fe83d9f",
+  "form_id": "5c012b30-cfe5-48df-b325-965d2862e710",
+  "field_id": "46dc8a9a-0799-4295-81f3-93003651920a",
+  "dependsOn": [
+    {
+      "field_id": "46dc8a9a-0799-4295-81f3-93003651920a",
+      "value": "8888"
+    }
+  ]
+}

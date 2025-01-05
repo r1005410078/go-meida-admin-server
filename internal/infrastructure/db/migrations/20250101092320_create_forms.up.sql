@@ -1,15 +1,21 @@
 -- 表单聚合表
 CREATE TABLE IF NOT EXISTS forms_aggregate (
   form_id CHAR(36) NOT NULL,
-  field_id CHAR(36) NOT NULL,
   form_name VARCHAR(255) NOT NULL,
-  field_name VARCHAR(255) NOT NULL,
+  related_ids JSON,
   created_at TIMESTAMP NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMP NOT NULL DEFAULT current_timestamp ON UPDATE NOW(),
 
-  PRIMARY KEY (form_id, field_id),
-  UNIQUE KEY unique_form_name (form_name, field_name),
-  UNIQUE KEY unique_form_field (form_id, field_id, field_name)
+  PRIMARY KEY (form_id, form_name)
+);
+
+-- 表单字段聚合表
+CREATE TABLE IF NOT EXISTS form_fields_aggregate (
+  field_id CHAR(36 ) PRIMARY KEY NOT NULL DEFAULT (uuid()),
+  form_id CHAR(36) NOT NULL,
+  label VARCHAR(255) NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMP NOT NULL DEFAULT current_timestamp ON UPDATE NOW()
 );
 
 -- 表单表
@@ -20,6 +26,8 @@ CREATE TABLE IF NOT EXISTS forms (
   created_at TIMESTAMP NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMP NOT NULL DEFAULT current_timestamp ON UPDATE NOW()
 );
+
+
 
 -- 字段表
 CREATE TABLE IF NOT EXISTS forms_fields (
@@ -36,11 +44,13 @@ CREATE TABLE IF NOT EXISTS forms_fields (
 );
 
 -- 关联表
+-- 用途 = 住宅 and 交易类型 = 出售
 CREATE TABLE IF NOT EXISTS forms_fields_dependencies (
-  id CHAR(36) PRIMARY KEY,
-  form_id CHAR(36) NOT NULL,
-  field_id CHAR(36) NOT NULL,
-  depends_on CHAR(36) NOT NULL,
+  id CHAR(36) PRIMARY KEY, -- 主键
+  form_id CHAR(36) NOT NULL, -- 表单
+  field_id CHAR(36) NOT NULL, -- 被依赖字段 租金
+  related_field_id CHAR(36) NOT NULL, -- 关联字段 用途
+  condition_value VARCHAR(255) NOT NULL DEFAULT '', -- 条件值 住宅
   created_at TIMESTAMP NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMP NOT NULL DEFAULT current_timestamp ON UPDATE NOW()
 );

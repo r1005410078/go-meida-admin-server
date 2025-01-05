@@ -1,65 +1,115 @@
 package forms
 
 import (
+	"errors"
 	"slices"
 	"time"
 
-	"github.com/r1005410078/meida-admin-server/internal/domain/forms/values"
+	"github.com/r1005410078/meida-admin-server/internal/domain/forms/command"
+	"github.com/r1005410078/meida-admin-server/internal/domain/forms/events"
 	"github.com/r1005410078/meida-admin-server/internal/domain/shared"
 )
 
-
 type FormAggregate struct {
-	FormId string 
-	FormName string
-	FieldId string
+	FormId    string
+	FormName  string
+	Fields    []FormField
+	// 关联ids
+	RelatedIds []string
+}
+
+type FormField struct {
+	FieldId   *string
 	FieldName *string
-	DependsOn []*values.Dependency
-	DeleteAt time.Time
+	CreateAt	*time.Time
+	UpdateAt 	*time.Time
+	DeleteAt  *time.Time
 }
 
 func New(aggregate *FormAggregate) *FormAggregate {
 	newAgg := &FormAggregate{
-		FormId: aggregate.FormId,
-		FieldId: aggregate.FieldId,
-		DependsOn: []*values.Dependency{},
+		FormId:    aggregate.FormId,
+		FormName:  aggregate.FormName,
 	}
 
 	if aggregate.FormId == "" {
 		newAgg.FormId = *shared.NewId()
 	}
 
-	if aggregate.FieldId == "" {
-		newAgg.FieldId = *shared.NewId()
-	}
-
 	return newAgg
 }
 
-// 设置字段名称
-func (h *FormAggregate) SetFieldName(name *string) {
-	h.FieldName = name
+func (h *FormAggregate) SaveRelatedIds(command *command.SaveDependsOnCommand) (interface{}, error) {
+	if command.Id == nil {
+		command.Id = shared.NewId()
+		h.RelatedIds = append(h.RelatedIds, *command.Id)
+
+		return &events.CreateDependsOnEvent{SaveDependsOnCommand: command}, nil
+	}
+
+	if !slices.Contains(h.RelatedIds, *command.Id) {
+		return nil, errors.New("id 不存在")
+	}
+
+	return &events.UpdateDependsOnEvent{SaveDependsOnCommand: command}, nil
 }
 
-// 设置字段依赖
-func (h *FormAggregate) ResetDependsOn(dependsOn []*values.Dependency, busEvent *shared.IEventBus) ([]*values.Dependency, []*values.Dependency) {
-	// 找出需要删除的依赖
-	var deleteDependsOn []*values.Dependency
-	for _, depend := range h.DependsOn {
-		if !slices.Contains(dependsOn, depend) {
-			deleteDependsOn = append(deleteDependsOn, depend)
+func (h *FormAggregate) SaveFormsFields(cmd *command.SaveFormsFieldsCommand) (interface{}, error) {
+	now := time.Now()
+	if cmd.FiledId == nil {
+		// 判断字段名称是否重复
+		existName := slices.ContainsFunc(h.Fields, func(v FormField) bool { return *v.FieldName == *cmd.Label })
+		if existName {
+			return  nil, errors.New("字段名称重复")
+		}
+		// 新增字段
+		formField := FormField{
+			FieldId:   shared.NewId(),
+			FieldName: cmd.Label,
+			CreateAt:  &now,
+		}
+
+		cmd.FiledId = formField.FieldId
+		h.Fields = append(h.Fields, formField)
+		return &events.CreateFormsFieldsEvent{SaveFormsFieldsCommand: cmd}, nil
+	}
+
+	// 更新字段
+	existNotId := slices.ContainsFunc(h.Fields, func(v FormField) bool { return *v.FieldId == *cmd.FiledId })
+	if !existNotId {
+		return nil, errors.New("FiledId 不存在")
+	}
+
+	for i, v := range h.Fields {
+		if *v.FieldId == *cmd.FiledId {
+			h.Fields[i].FieldName = cmd.Label
+			h.Fields[i].UpdateAt = &now
+			break
 		}
 	}
 
-	// 需要添加的依赖
-	var appendDependsOn []*values.Dependency
-	for _, depend := range dependsOn {
-		if !slices.Contains(h.DependsOn, depend) {
-			appendDependsOn = append(appendDependsOn, depend)
+	return &events.UpdateFormsFieldsEvent{SaveFormsFieldsCommand: cmd}, nil
+}
+
+func (h *FormAggregate) DeleteFormsFields(cmd *command.DeleteFormsFieldsCommand) (interface{}, error) {
+	// 更新字段
+	existNotId := slices.ContainsFunc(h.Fields, func(v FormField) bool { return *v.FieldId == *cmd.FiledId })
+	if !existNotId {
+		return nil, errors.New("FiledId 不存在")
+	}
+
+	now := time.Now()
+	for i, v := range h.Fields {
+		if *v.FieldId == *cmd.FiledId {
+			h.Fields[i].DeleteAt = &now
+			break
 		}
 	}
 
-	h.DependsOn = dependsOn
+	return &events.DeleteFormsFiledsEvent{DeleteFormsFieldsCommand: cmd}, nil
+}
 
-	return deleteDependsOn, appendDependsOn
+
+func (h *FormAggregate) UpdateByFormsCommand(command *command.SaveFormsCommand) {
+	h.FormName = command.Name
 }

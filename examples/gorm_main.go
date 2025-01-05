@@ -3,9 +3,6 @@ package main
 import (
 	"encoding/json"
 	"time"
-
-	"github.com/r1005410078/meida-admin-server/internal/infrastructure/dao/model"
-	"github.com/r1005410078/meida-admin-server/internal/infrastructure/db"
 )
 
 
@@ -19,23 +16,34 @@ type FormAggregate struct {
 }
 
 func main() {
-  conn, _ :=	db.GetDB()
+  // conn, _ :=	db.GetDB()
  
-	DependsOn, err := json.Marshal([]string{"1", "2"})
+	// DependsOn, err := json.Marshal([]string{"1", "2"})
+
+	// if err != nil {
+	// 	panic(err)
+	// }
+
+	// str := string(DependsOn)
+	// conn.Create(&model.FormsAggregate{
+	// 	FormID: "12",
+	// 	FieldID: "13",
+	// 	FormName: "formName1111",
+	// 	FieldName: 	"FieldName",
+	// 	DependsOn: &str,
+	// })
+
+	
+	data := make(map[string]string)
+
+	data["formId"] = "12"
+	data["fieldId"] = "13"
+
+	res, err := json.Marshal(data)
 
 	if err != nil {
 		panic(err)
 	}
 
-	str := string(DependsOn)
-	conn.Create(&model.FormsAggregate{
-		FormID: "12",
-		FieldID: "13",
-		FormName: "formName1111",
-		FieldName: 	"FieldName",
-		DependsOn: &str,
-	})
-
-	
-	
+	println(string(res))
 }

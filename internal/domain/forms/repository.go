@@ -1,15 +1,18 @@
 package forms
 
+import "github.com/r1005410078/meida-admin-server/internal/domain/forms/command"
+
 type IFormsAggregateRepository interface {
 	Begin()
 	Commit()
 	Rollback()
 	
-	Save(aggregate *FormAggregate) error
-	Updates(aggregate []*FormAggregate) error
-	GetAggregate(formId, fieldId *string) (*FormAggregate, error)
-	GetAggregates(formId  *string) ([]*FormAggregate, error)
-	DeleteAggregate(id *string)error
+	SaveAggregate(aggregate *FormAggregate) error
+	DeleteAggregateFields(cmd *command.DeleteFormsFieldsCommand) error
+	Updates(aggregate *FormAggregate) error
+	GetAggregate(formId  *string) (*FormAggregate, error)
+	DeleteAggregateByFormId(formId *string)error
+	DeleteAggregateByFieldId(formId *string)error
 	// 字段名称重复
 	ExistFieldName (formId, fieldName *string) bool
 	// 表单名称重复

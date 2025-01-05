@@ -34,18 +34,20 @@ func (h *SaveFormsHandler) Handle(command *command.SaveFormsCommand) error {
 	defer h.repo.Commit()
 	
 	if command.Id == nil {
-		aggregate = forms.New(aggregate)
+		aggregate = forms.New(&forms.FormAggregate{
+			FormName: command.Name,
+		})
 		// 保存聚合
-		if err := h.repo.Save(aggregate); err != nil {
+		if err := h.repo.SaveAggregate(aggregate); err != nil {
 			h.repo.Rollback()
 			// 保存失败
-			h.eventBus.Dispatch(events.SaveFormsFailedEvent { SaveFormsCommand: command, Err: err })
+			h.eventBus.Dispatch(&events.SaveFormsFailedEvent { SaveFormsCommand: command, Err: err })
 			return err
 		}
 
 		// 新增表单
 		command.Id = &aggregate.FormId
-		if err := h.eventBus.Dispatch(events.CreateFormsEvent { SaveFormsCommand: command }); err != nil {
+		if err := h.eventBus.Dispatch(&events.CreateFormsEvent { SaveFormsCommand: command }); err != nil {
 			h.repo.Rollback()
 			return err
 		}
@@ -54,22 +56,24 @@ func (h *SaveFormsHandler) Handle(command *command.SaveFormsCommand) error {
 	}
 
 	// 更新名称
-	aggregates, err := h.repo.GetAggregates(command.Id)
+	aggregate, err := h.repo.GetAggregate(command.Id)
 	if err != nil {
 		// 保存失败
-		h.eventBus.Dispatch(events.SaveFormsFailedEvent { SaveFormsCommand: command, Err: err })
+		h.eventBus.Dispatch(&events.SaveFormsFailedEvent { SaveFormsCommand: command, Err: err })
 		return err
 	}
 
-	if err := h.repo.Updates(aggregates); err != nil {
+	aggregate.UpdateByFormsCommand(command)
+	
+	if err := h.repo.Updates(aggregate); err != nil {
 		h.repo.Rollback()
 		// 保存失败
-		h.eventBus.Dispatch(events.SaveFormsFailedEvent { SaveFormsCommand: command, Err: err })
+		h.eventBus.Dispatch(&events.SaveFormsFailedEvent { SaveFormsCommand: command, Err: err })
 		return err
 	}
 
 	// 更新表单
-	if err := h.eventBus.Dispatch(events.UpdateFormsEvent { SaveFormsCommand: command }); err != nil {	
+	if err := h.eventBus.Dispatch(&events.UpdateFormsEvent { SaveFormsCommand: command }); err != nil {	
 		h.repo.Rollback()
 		return err
 	}

@@ -25,15 +25,15 @@ func (h *DeleteFormsCommandHandler) Handle(command *command.DeleteFormsCommand) 
 	h.repo.Begin()
 	defer h.repo.Commit()
 
-	if err := h.repo.DeleteAggregate(&command.Id); err != nil {
+	if err := h.repo.DeleteAggregateByFormId(&command.Id); err != nil {
 		h.repo.Rollback()
-		h.eventBus.Dispatch(events.DeleteFormsFailedEvent { DeleteFormsCommand: command, Err: err })
+		h.eventBus.Dispatch(&events.DeleteFormsFailedEvent { DeleteFormsCommand: command, Err: err })
 		return errors.New("删除表单失败")
 	}
 	
-	if err := h.eventBus.Dispatch(events.DeleteFormsCommand { Id: &command.Id }); err != nil {
+	if err := h.eventBus.Dispatch(&events.DeleteFormsEvent { Id: &command.Id }); err != nil {
 		h.repo.Rollback()
-		h.eventBus.Dispatch(events.DeleteFormsFailedEvent { DeleteFormsCommand: command, Err: err })
+		h.eventBus.Dispatch(&events.DeleteFormsFailedEvent { DeleteFormsCommand: command, Err: err })
 		return errors.New("删除表单失败")
 	}
 

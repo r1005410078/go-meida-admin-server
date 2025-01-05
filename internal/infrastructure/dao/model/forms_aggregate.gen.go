@@ -4,14 +4,19 @@
 
 package model
 
+import (
+	"time"
+)
+
 const TableNameFormsAggregate = "forms_aggregate"
 
 // FormsAggregate mapped from table <forms_aggregate>
 type FormsAggregate struct {
-	FormID    string `gorm:"column:form_id;primaryKey" json:"form_id"`
-	FieldID   string `gorm:"column:field_id;primaryKey" json:"field_id"`
-	FormName  string `gorm:"column:form_name;not null" json:"form_name"`
-	FieldName string `gorm:"column:field_name;not null" json:"field_name"`
+	FormID     string    `gorm:"column:form_id;primaryKey" json:"form_id"`
+	FormName   string    `gorm:"column:form_name;primaryKey" json:"form_name"`
+	CreatedAt  time.Time `gorm:"column:created_at;not null;default:CURRENT_TIMESTAMP" json:"created_at"`
+	UpdatedAt  time.Time `gorm:"column:updated_at;not null;default:CURRENT_TIMESTAMP" json:"updated_at"`
+	RelatedIds *string   `gorm:"column:related_ids" json:"related_ids"`
 }
 
 // TableName FormsAggregate's table name

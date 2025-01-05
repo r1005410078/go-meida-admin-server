@@ -9,5 +9,5 @@ type FieldOption struct {
 
 type Dependency struct {
 	FieldId       string  `json:"field_id"` // 被联动字段的标识
-	ConditionValue string  `json:"condition_value"` // 联动条件值
+	Value 				string  `json:"value"` // 联动条件值
 }

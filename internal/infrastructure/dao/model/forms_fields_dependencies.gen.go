@@ -12,12 +12,13 @@ const TableNameFormsFieldsDependency = "forms_fields_dependencies"
 
 // FormsFieldsDependency mapped from table <forms_fields_dependencies>
 type FormsFieldsDependency struct {
-	ID        string    `gorm:"column:id;primaryKey" json:"id"`
-	FormID    string    `gorm:"column:form_id;not null" json:"form_id"`
-	FieldID   string    `gorm:"column:field_id;not null" json:"field_id"`
-	DependsOn string    `gorm:"column:depends_on;not null" json:"depends_on"`
-	CreatedAt time.Time `gorm:"column:created_at;not null;default:CURRENT_TIMESTAMP" json:"created_at"`
-	UpdatedAt time.Time `gorm:"column:updated_at;not null;default:CURRENT_TIMESTAMP" json:"updated_at"`
+	ID             string    `gorm:"column:id;primaryKey" json:"id"`
+	FormID         string    `gorm:"column:form_id;not null" json:"form_id"`
+	FieldID        string    `gorm:"column:field_id;not null" json:"field_id"`
+	RelatedFieldID string    `gorm:"column:related_field_id;not null" json:"related_field_id"`
+	ConditionValue string    `gorm:"column:condition_value;not null" json:"condition_value"`
+	CreatedAt      time.Time `gorm:"column:created_at;not null;default:CURRENT_TIMESTAMP" json:"created_at"`
+	UpdatedAt      time.Time `gorm:"column:updated_at;not null;default:CURRENT_TIMESTAMP" json:"updated_at"`
 }
 
 // TableName FormsFieldsDependency's table name

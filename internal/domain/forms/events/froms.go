@@ -16,7 +16,7 @@ type SaveFormsFailedEvent struct {
 	Err error
 }
 
-type DeleteFormsCommand struct {
+type DeleteFormsEvent struct {
 	Id *string
 }
 
