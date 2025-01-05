@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS forms_aggregate (
 
 -- 表单字段聚合表
 CREATE TABLE IF NOT EXISTS form_fields_aggregate (
-  field_id CHAR(36 ) PRIMARY KEY NOT NULL DEFAULT (uuid()),
+  field_id CHAR(36) PRIMARY KEY NOT NULL DEFAULT (uuid()),
   form_id CHAR(36) NOT NULL,
   label VARCHAR(255) NOT NULL,
   created_at TIMESTAMP NOT NULL DEFAULT NOW(),
