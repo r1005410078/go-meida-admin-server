@@ -176,11 +176,11 @@
     "split": "-",
     "children": [
       {
-        "type": "input",
+        "type": "door_number_from",
         "placeholder": "请输入"
       },
       {
-        "type": "input",
+        "type": "door_number_to",
         "placeholder": "请输入",
         "addonAfter": "楼"
       }

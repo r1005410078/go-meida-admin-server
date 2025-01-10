@@ -1,27 +1,29 @@
 create table if not exists house_property_aggregate (
-  id UUID not null primary key,
+  house_property_id CHAR(36) not null primary key,
   address VARCHAR(255) not null, -- 地址,不可重复
   is_synced BOOLEAN not null default false,  -- 是否在外网同步
   deleted_at TIMESTAMP, -- 删除时间
   created_at TIMESTAMP not null default now(),
   updated_at TIMESTAMP not null default current_timestamp on update now()
-)
+);
 
 create table if not exists house_property (
-  id UUID not null primary key,   
+  id CHAR(36) not null primary key,   
   purpose VARCHAR(255) not null, -- 用途
   transaction_type VARCHAR(255)  not null, -- 交易类型
   house_status VARCHAR(255), -- 交易状态
   owner_name VARCHAR(255)  not null, -- 业主姓名
   phone VARCHAR(255)  not null, -- 联系电话
   community_address VARCHAR(255) not null, -- 小区地址
-  floor_range_min INTEGER,
-  floor_range_max INTEGER,
+  floor_range_min INTEGER, -- 起始楼层
+  floor_range_max INTEGER, -- 结束楼层
   building_number INTEGER, -- 座栋
   unit_number INTEGER, -- 单元
-  door_number INTEGER, -- 楼层
+  door_number  INTEGER, -- 门牌号
+  floor_number INTEGER, -- 楼层
+  floor_number_from INTEGER, -- 起始楼层
+  floor_number_to INTEGER, -- 结束楼层
   title VARCHAR(255), -- 房源标题
-  tags json, -- 推荐标签
   car_height DECIMAL(5, 2), -- 车位高度
   layout_room INTEGER, -- 户型-房
   layout_hall INTEGER, -- 户型-厅
@@ -67,71 +69,64 @@ create table if not exists house_property (
   present_state VARCHAR(255), -- 现状
   external_sync BOOLEAN not null default false, -- 外网同步
   remark TEXT , -- 备注
-  images json , -- 图片
-  location VARCHAR(255) , -- 位置
+  deleted_at timestamp,
+  created_at timestamp not null default now(),
+  updated_at timestamp not null default current_timestamp on update now()
+);
+
+-- 推荐标签
+create table if not exists house_property_tags (
+  id CHAR(36) not null primary key,
+  house_property_id CHAR(36) not null,
+  tag_id CHAR(36) not null,
   deleted_at timestamp,
   created_at timestamp not null default now(),
   updated_at timestamp not null default current_timestamp on update now(),
-
-  foreign key (tags) references house_property_tag(id),
-  foreign key (house_type) references house_property_type(id),
-  foreign key (purpose) references house_property_purpose(id),
-  foreign key (decoration) references house_property_decoration(id)
+  foreign key (house_property_id) references house_property(id),
+  foreign key (tag_id) references house_property_tag(id)
 );
 
-
--- 推荐标签
+-- 房源标签
 create table if not exists house_property_tag (
-  id UUID not null primary key,
-  house_property_id UUID not null,
+  id CHAR(36) not null primary key,
   label VARCHAR(255) not null,
-  name VARCHAR(255) not null,
-  type VARCHAR(255) not null,
   deleted_at timestamp,
   created_at timestamp not null default now(),
   updated_at timestamp not null default current_timestamp on update now(),
   foreign key (house_property_id) references house_property(id)
 );
 
--- 用途
-create table if not exists house_property_purpose (
-  id UUID not null primary key,
-  house_property_id UUID not null,
-  name VARCHAR(255) not null,
+-- 房源多媒体
+create table if not exists house_property_medias (
+  id CHAR(36) not null primary key,
+  house_property_id CHAR(36) not null,
+  url VARCHAR(255) not null,
+  type VARCHAR(255) not null, -- 图片类型 (cover, normal)
   deleted_at timestamp,
   created_at timestamp not null default now(),
   updated_at timestamp not null default current_timestamp on update now(),
+  foreign key (house_property_id) references house_property(id)
 );
 
--- 房屋类型
-create table if not exists house_property_type (
-  id UUID not null primary key,
-  house_property_id UUID not null,
-  name VARCHAR(255) not null,
-  deleted_at timestamp,
-  created_at timestamp not null default now(),
-  updated_at timestamp not null default current_timestamp on update now(),
+-- 房源经纬度
+CREATE TABLE locations (
+    id CHAR(36) PRIMARY KEY,
+    latitude DECIMAL(9,6),   -- 纬度
+    longitude DECIMAL(9,6),  -- 经度
+    deleted_at timestamp,
+    created_at timestamp not null default now(),
+    updated_at timestamp not null default current_timestamp on update now(),
+    foreign key (id) references house_property(id)
 );
-
--- 装修
-create table if not exists house_property_decoration (
-  id UUID not null primary key,
-  house_property_id UUID not null,
-  name VARCHAR(255) not null,
-  deleted_at timestamp,
-  created_at timestamp not null default now(),
-  updated_at timestamp not null default current_timestamp on update now(),
-);
-
 
 -- 房源修改快照
 create table if not exists house_property_history (
-  id UUID not null primary key,
-  house_property_id UUID not null,
+  id CHAR(36) not null primary key,
+  house_property_id CHAR(36) not null,
   house_property_data json not null,
   deleted_at timestamp,
   created_at TIMESTAMP not null default now(),
   updated_at TIMESTAMP not null default current_timestamp on update now(),
 
   foreign key (house_property_id) references house_property(id)
-)
+);

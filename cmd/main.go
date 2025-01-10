@@ -146,6 +146,25 @@ func main() {
 	bus.Register(formServices.UpdateDependsOnEventHandle)
 	bus.Register(formServices.DeleteDependsOnEventHandle)
 
+	// 初始化房源事件处理器
+	houseAggregateRepo := repository.NewHouseAggregateRepository(mysqlDb)
+	houseRepo := repository.NewHouseRepository(mysqlDb)
+	houseServices := services.NewHouseServices(houseRepo, logger)
+
+	bus.Register(houseServices.CreateHouseEventHandle)
+	bus.Register(houseServices.UpdateHouseEventHandle)
+	bus.Register(houseServices.DeleteHouseEventHandle)
+	bus.Register(houseServices.CreateHouseTagsEventHandle)
+	bus.Register(houseServices.UpdateHouseTagsEventHandle)
+	bus.Register(houseServices.DeleteHouseTagsEventHandle)
+	bus.Register(houseServices.CreateHouseMediasEventHandle)
+	bus.Register(houseServices.UpdateHouseMediasEventHandle)
+	bus.Register(houseServices.DeleteHouseMediasEventHandle)
+	bus.Register(houseServices.SaveHouseLocationEventHandle)
+	bus.Register(houseServices.DeleteHouseLocationEventHandle)
+	bus.Register(houseServices.HouseCommandErrorEventHandle)
+
+
 	// 路由分组
 	v1 := r.Group("/v1")
 
@@ -164,7 +183,6 @@ func main() {
 			repository.NewPermissionsRepository(mysqlDb),
 		),
 	)
-
 
 	// 权限路由
 	permissionsRouter := v1.Group("/user-permissions")
@@ -194,6 +212,20 @@ func main() {
 	// 发送验证码
 	userRouter.POST("/send-verify-code", userHttpHandlers.SendVerifyCodeHandler)
 	userRouter.POST("/refresh-token", userHttpHandlers.RefreshTokenHandler)
+
+
+	// 房源路由
+	houseHttpHandlers := http.NewHouseHandlers(houseAggregateRepo, bus, houseServices)
+	houseRouter := v1.Group("/house")
+	houseRouter.POST("/list", houseHttpHandlers.ListHouseHandler)
+	houseRouter.POST("/save", houseHttpHandlers.SaveHouseHandler)
+	houseRouter.POST("/delete", houseHttpHandlers.DeleteHouseHandler)
+	houseRouter.POST("/save-tags", houseHttpHandlers.SaveHouseTagsHandler)
+	houseRouter.POST("/delete-tags", houseHttpHandlers.DeleteHouseTagsHandler)
+	houseRouter.POST("/save-medias", houseHttpHandlers.SaveHouseMediasHandler)
+	houseRouter.POST("/delete-medias", houseHttpHandlers.DeleteHouseMediasHandler)
+	houseRouter.POST("/save-location", houseHttpHandlers.SaveHouseLocationHandler)
+	houseRouter.POST("/delete-location", houseHttpHandlers.DeleteHouseLocationHandler)
 
 	// 启动 Gin
 	if err := r.Run(":8080"); err != nil {
