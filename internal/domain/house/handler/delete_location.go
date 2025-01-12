@@ -34,7 +34,7 @@ func (h *DeleteHouseLocationCommandHandler) Handle(command *command.DeleteHouseL
 		return errors.New("房源不存在")
 	}
 
-	if err := h.eventBus.Dispatch(events.DeleteHouseLocationEvent{ DeleteHouseLocationCommand: command }); err != nil {
+	if err := h.eventBus.Dispatch(&events.DeleteHouseLocationEvent{ DeleteHouseLocationCommand: command }); err != nil {
 		h.eventBus.Dispatch(events.NewHouseCommandError(command, err))
 		return err
 	}

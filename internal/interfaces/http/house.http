@@ -4,5 +4,128 @@ User-Agent: vscode-restclient
 content-type: application/json
 
 {
-  
+  "purpose": "住宅",
+  "transactionType": "出租",
+  "houseStatus": "在售",
+  "ownerName": "rong",
+  "phone": "123",
+  "community": "小区地址",
+  "floorRangeMin": 1,
+  "floorRangeMax": 10,
+  "buildingNumber": 1,
+  "unitNumber": 1,
+  "doorNumber": 101
+}
+
+########
+
+POST http://127.0.0.1:8080/v1/house/save
+User-Agent: vscode-restclient
+content-type: application/json
+
+{
+  "id": "f0b50dc9-e6aa-4b6d-bf76-07a30b092875",
+  "purpose": "住宅",
+  "transactionType": "租售",
+  "houseStatus": "在售",
+  "ownerName": "rong",
+  "community": "董家弄",
+  "floorRangeMin": 1,
+  "floorRangeMax": 10,
+  "buildingNumber": 1,
+  "unitNumber": 1,
+  "doorNumber": 101,
+  "houseDetails": {
+    "floorNumber": 1,
+    "floorNumberFrom": 1,
+    "floorNumberTo": 10,
+    "title": "标题",
+    "carHeight": 1.5,
+    "layoutRoom": 1,
+    "layoutHall": 1,
+    "layoutKitchen": 1,
+    "layoutBathroom": 1,
+    "layoutBalcony": 1,
+    "stairs": 1,
+    "rooms": 1,
+    "actualRate": 1.5,
+    "totalArea": 1.5,
+    "propertyTax": 1.5,
+    "level": 1,
+    "floorHeight": 1.5,
+    "progressDepth": 1.5,
+    "doorWidth": 1.5,
+    "buildingArea": 1,
+    "useArea": 1.5,
+    "salePrice": 1.5,
+    "rentPrice": 1.5,
+    "rentLowPrice": 1.5,
+    "downPayment": 1.5,
+    "saleLowPrice": 1.5,
+    "houseType": "类型",
+    "houseOrientation": "朝向",
+    "houseDecoration": "装修",
+    "discountYearLimit": 1,
+    "tags": [
+      "A",
+      "B",
+      "C"
+    ],
+    "medias": [
+      "https://www.baidu.com"
+    ],
+    "locations": {
+      "latitude": 39.915,
+      "longitude": 116.404
+    }
+  }
+}
+
+######### 删除房源
+
+DELETE http://127.0.0.1:8080/v1/house/delete/b77f20c4-241b-40a8-adf3-ff49b5f96523
+User-Agent: vscode-restclient 
+
+
+######## 保存标签
+
+POST  http://127.0.0.1:8080/v1/house/save-tags
+User-Agent: vscode-restclient
+content-type: application/json
+
+{ 
+  "houseId": "f0b50dc9-e6aa-4b6d-bf76-07a30b092875",
+  "tags": [
+    "标签7",
+    "标签8",
+    "标签9"
+  ]
+}
+
+
+########## 保存多媒体
+POST  http://127.0.0.1:8080/v1/house/save-medias
+User-Agent: vscode-restclient
+content-type: application/json
+
+{
+  "houseId": "f0b50dc9-e6aa-4b6d-bf76-07a30b092875",
+  "urls": [
+    "https://www.baidu.com/img/bd_logo1.png",
+    "https://www.baidu.com/img/bd_logo2.png",
+    "https://www.baidu.com/img/bd_logo3.png"
+  ]
+}
+
+
+######## 保存路径
+
+POST  http://127.0.0.1:8080/v1/house/save-location
+User-Agent: vscode-restclient
+content-type: application/json
+
+{
+  "houseId": "f0b50dc9-e6aa-4b6d-bf76-07a30b092875",
+  "latitude": 39.915,
+  "longitude": 116.404
 }

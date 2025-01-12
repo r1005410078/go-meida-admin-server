@@ -46,6 +46,8 @@ func (r *UserAggregateRepository) Begin() {
 func (r *UserAggregateRepository) Rollback() {
 	if r.tx != nil {
 		r.tx.Rollback()
+	} else {
+		panic("cannot rollback because tx is nil")
 	}
 }
 

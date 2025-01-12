@@ -20,33 +20,13 @@ type DeleteHouseEvent struct {
 }
 
 // 添加房源标签
-type CreateHouseTagsEvent struct {
+type SaveHouseTagsEvent struct {
 	*command.SaveHouseTagsCommand
-}
-
-// 更新房源标签
-type UpdateHouseTagsEvent struct {
-	*command.SaveHouseTagsCommand
-}
-
-// 删除房源标签
-type DeleteHouseTagsEvent struct {
-	*command.DeleteHouseTagsCommand
 }
 
 // 添加房源多媒体
-type CreateHouseMediasEvent struct {
+type SaveHouseMediasEvent struct {
 	*command.SaveHouseMediasCommand
-}
-
-// 更新房源多媒体
-type UpdateHouseMediasEvent struct {
-	*command.SaveHouseMediasCommand
-}
-
-// 删除房源多媒体
-type DeleteHouseMediasEvent struct {
-	*command.DeleteHouseMediasCommand
 }
 
 // 保存房源经纬度

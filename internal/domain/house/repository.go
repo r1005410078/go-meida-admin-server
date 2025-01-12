@@ -7,7 +7,7 @@ type IHouseAggregateRepository interface {
 	Commit()
 
 	// 地址是否存在
-	ExistAddress(address *string) bool
+	ExistAddress(address string, id *string) bool
 
 	// 聚合
 	GetAggregate(id *string) (*HousePropertyAggregate, error)

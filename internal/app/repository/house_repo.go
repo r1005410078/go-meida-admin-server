@@ -11,18 +11,10 @@ type IHouseRepository interface {
 	DeleteHouse(id *string) error
 
 	// 创建房源标签
-	CreateHouseTags(inputHouse *events.CreateHouseTagsEvent) error
-	// 更新房源标签
-	UpdateHouseTags(inputHouse *events.UpdateHouseTagsEvent) error
-	// 删除房源标签
-	DeleteHouseTags(inputHouse *events.DeleteHouseTagsEvent) error
+	SaveHouseTags(inputHouse *events.SaveHouseTagsEvent) error
 
 	// 创建房源多媒体
-	CreateHouseMedias(inputHouse *events.CreateHouseMediasEvent) error
-	// 更新房源多媒体
-	UpdateHouseMedias(inputHouse *events.UpdateHouseMediasEvent) error
-	// 删除房源多媒体
-	DeleteHouseMedias(houseId *string) error
+	SaveHouseMedias(inputHouse *events.SaveHouseMediasEvent) error
 
 	// 保存房源经纬度
 	SaveHouseLocation(inputHouse *events.SaveHouseLocationEvent) error

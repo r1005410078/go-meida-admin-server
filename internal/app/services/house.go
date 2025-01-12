@@ -39,34 +39,14 @@ func (s *HouseServices) DeleteHouseEventHandle(event *events.DeleteHouseEvent) e
 	return s.repo.DeleteHouse(event.ID)
 }
 
-// 添加房源标签
-func (s *HouseServices) CreateHouseTagsEventHandle(event *events.CreateHouseTagsEvent) error {
-	return  s.repo.CreateHouseTags(event)
+// 保存房源标签
+func (s *HouseServices) SaveHouseTagsEventHandle(event *events.SaveHouseTagsEvent) error {
+	return s.repo.SaveHouseTags(event)
 }
 
-// 更新房源标签
-func (s *HouseServices) UpdateHouseTagsEventHandle(event *events.UpdateHouseTagsEvent) error {
-	return  s.repo.UpdateHouseTags(event)
-}
-
-// 删除房源标签
-func (s *HouseServices) DeleteHouseTagsEventHandle(event *events.DeleteHouseTagsEvent) error {
-	return  s.repo.DeleteHouseTags(event)
-}
-
-// 添加房源多媒体
-func (s *HouseServices) CreateHouseMediasEventHandle(event *events.CreateHouseMediasEvent) error {
-	return  s.repo.CreateHouseMedias(event)
-}
-
-// 更新房源多媒体
-func (s *HouseServices) UpdateHouseMediasEventHandle(event *events.UpdateHouseMediasEvent) error {
-	return  s.repo.UpdateHouseMedias(event)
-}
-
-// 删除房源多媒体
-func (s *HouseServices) DeleteHouseMediasEventHandle(event *events.DeleteHouseMediasEvent) error {
-	return  s.repo.DeleteHouseMedias(event.ID)
+// 保存房源多媒体
+func (s *HouseServices) SaveHouseMediasEventHandle(event *events.SaveHouseMediasEvent) error {
+	return  s.repo.SaveHouseMedias(event)
 }
 
 // 保存房源经纬度

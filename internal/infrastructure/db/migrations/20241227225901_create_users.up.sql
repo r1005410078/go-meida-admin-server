@@ -14,8 +14,8 @@ CREATE TABLE IF NOT EXISTS users (
     role VARCHAR(50),                               -- 用户角色
     status VARCHAR(50),                             -- 账户状态
     deleted_at TIMESTAMP,                           -- 删除时间 
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,    -- 创建时间
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP on update current_timestamp,    -- 更新时间
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,    -- 创建时间
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP on update current_timestamp,    -- 更新时间
     last_login_at TIMESTAMP,                        -- 最后登录时间
     login_attempts INTEGER DEFAULT 0,               -- 登录尝试次数
     preferences JSON,                 -- 用户偏好设置，使用JSONB存储
@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS users (
 -- 创建user聚合表，用于DDD聚合根存储
 CREATE TABLE IF NOT EXISTS user_aggregate (
     user_id VARCHAR(255) PRIMARY KEY,               -- 用户聚合根ID
-    username VARCHAR(255) NOT NULL unique,          -- 用户名
+    username VARCHAR(255) unique,          -- 用户名
     email VARCHAR(255) unique,                      -- 邮箱
     password_hash VARCHAR(255) NOT NULL,            -- 密码哈希值
     role VARCHAR(50),                               -- 用户角色
@@ -38,6 +38,6 @@ CREATE TABLE IF NOT EXISTS user_aggregate (
     last_logout_at TIMESTAMP,                       -- 最后登出时间
     login_failed_at TIMESTAMP,                      -- 最后登录失败时间
     attempts INTEGER DEFAULT 0,                     -- 登录尝试次数
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,    -- 创建时间
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP on update current_timestamp    -- 更新时间
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,    -- 创建时间
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP on update current_timestamp    -- 更新时间
 );

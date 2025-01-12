@@ -6,20 +6,17 @@ package model
 
 import (
 	"time"
-
-	"gorm.io/gorm"
 )
 
 const TableNameHousePropertyTag = "house_property_tags"
 
 // HousePropertyTag mapped from table <house_property_tags>
 type HousePropertyTag struct {
-	ID              string         `gorm:"column:id;primaryKey" json:"id"`
-	HousePropertyID string         `gorm:"column:house_property_id;not null" json:"house_property_id"`
-	TagID           string         `gorm:"column:tag_id;not null" json:"tag_id"`
-	DeletedAt       gorm.DeletedAt `gorm:"column:deleted_at" json:"deleted_at"`
-	CreatedAt       time.Time      `gorm:"column:created_at;not null;default:CURRENT_TIMESTAMP" json:"created_at"`
-	UpdatedAt       time.Time      `gorm:"column:updated_at;not null;default:CURRENT_TIMESTAMP" json:"updated_at"`
+	ID              int64     `gorm:"column:id;primaryKey;autoIncrement:true" json:"id"`
+	Tag             string    `gorm:"column:tag;not null" json:"tag"`
+	HousePropertyID string    `gorm:"column:house_property_id;not null" json:"house_property_id"`
+	CreatedAt       time.Time `gorm:"column:created_at;not null;default:CURRENT_TIMESTAMP" json:"created_at"`
+	UpdatedAt       time.Time `gorm:"column:updated_at;not null;default:CURRENT_TIMESTAMP" json:"updated_at"`
 }
 
 // TableName HousePropertyTag's table name

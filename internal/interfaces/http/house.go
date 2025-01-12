@@ -47,12 +47,12 @@ func (s *HouseHttpHandlers) SaveHouseHandler(c *gin.Context) {
 
 // 删除房源
 func (s *HouseHttpHandlers) DeleteHouseHandler(c *gin.Context) {
-	body := &command.DeleteHouseCommand{}
-	if err := c.ShouldBindBodyWithJSON(&body); err != nil {
-		c.JSON(400, gin.H{"error": err.Error()})
-		return
+	id := c.Param("id")
+
+	body := &command.DeleteHouseCommand{
+		ID: &id,
 	}
-	
+
 	if err := handler.NewDeleteHouseCommandHandler(s.aggregateRepo, s.eventBus).Handle(body); err != nil {
 		c.JSON(500, gin.H{"error": err.Error()})
 		return
@@ -77,23 +77,6 @@ func (s *HouseHttpHandlers) SaveHouseTagsHandler(c *gin.Context) {
 	c.JSON(200, gin.H{"message": "success"})
 }
 
-
-// 删除房源标签
-func (s *HouseHttpHandlers) DeleteHouseTagsHandler(c *gin.Context) {
-	body := &command.DeleteHouseTagsCommand{}
-	if err := c.ShouldBindBodyWithJSON(&body); err != nil {
-		c.JSON(400, gin.H{"error": err.Error()})
-		return
-	}
-	
-	if err := handler.NewDeleteHouseTagCommandHandler(s.aggregateRepo, s.eventBus).Handle(body); err != nil {
-		c.JSON(500, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.JSON(200, gin.H{"message": "success"})
-}
-
 // 保存房源多媒体
 func (s *HouseHttpHandlers) SaveHouseMediasHandler(c *gin.Context) {
 	body := &command.SaveHouseMediasCommand{}
@@ -103,22 +86,6 @@ func (s *HouseHttpHandlers) SaveHouseMediasHandler(c *gin.Context) {
 	}
 	
 	if err := handler.NewSaveHouseMediasCommandHandler(s.aggregateRepo, s.eventBus).Handle(body); err != nil {
-		c.JSON(500, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.JSON(200, gin.H{"message": "success"})
-}
-
-// 删除房源多媒体
-func (s *HouseHttpHandlers) DeleteHouseMediasHandler(c *gin.Context) {
-	body := &command.DeleteHouseMediasCommand{}
-	if err := c.ShouldBindBodyWithJSON(&body); err != nil {
-		c.JSON(400, gin.H{"error": err.Error()})
-		return
-	}
-	
-	if err := handler.NewDeleteHouseMediasCommandHandler(s.aggregateRepo, s.eventBus).Handle(body); err != nil {
 		c.JSON(500, gin.H{"error": err.Error()})
 		return
 	}

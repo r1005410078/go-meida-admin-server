@@ -23,18 +23,13 @@ func NewSaveHouseLocationCommandHandler(repo house.IHouseAggregateRepository, ev
 
 func (h *SaveHouseLocationCommandHandler) Handle(command *command.SaveHouseLocationCommand) error {
 
-	aggregate, err := h.repo.GetAggregate(command.ID)
-	if err != nil {
-		h.eventBus.Dispatch(events.NewHouseCommandError(command, err))
-		return err
-	}
-
-	if aggregate == nil {
+	aggregate, err := h.repo.GetAggregate(command.HousePropertyID)
+	if aggregate == nil || err != nil{
 		h.eventBus.Dispatch(events.NewHouseCommandError(command, errors.New("房源不存在")))
 		return errors.New("房源不存在")
 	}
 
-	if err := h.eventBus.Dispatch(events.SaveHouseLocationEvent{ SaveHouseLocationCommand: command }); err != nil {
+	if err := h.eventBus.Dispatch(&events.SaveHouseLocationEvent{ SaveHouseLocationCommand: command }); err != nil {
 		h.eventBus.Dispatch(events.NewHouseCommandError(command, err))
 		return err
 	}

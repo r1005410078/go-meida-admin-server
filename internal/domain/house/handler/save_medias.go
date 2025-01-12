@@ -23,29 +23,14 @@ func NewSaveHouseMediasCommandHandler(repo house.IHouseAggregateRepository, even
 
 func (h *SaveHouseMediasCommandHandler) Handle(command *command.SaveHouseMediasCommand) error {
 
-	aggregate, err := h.repo.GetAggregate(command.ID)
-	if err != nil {
+	aggregate, err := h.repo.GetAggregate(command.HousePropertyID)
+	
+	if aggregate == nil || err != nil {
 		h.eventBus.Dispatch(events.NewHouseCommandError(command, err))
 		return errors.New("房源不存在")
 	}
 
-	mediasEvent, err := aggregate.SaveMedias(command)
-
-	if err != nil {
-		h.eventBus.Dispatch(events.NewHouseCommandError(command, err))
-		return err
-	}
-
-	h.repo.Begin()
-	defer h.repo.Commit()
-	if err := h.repo.SaveAggregate(aggregate); err != nil {
-		h.repo.Rollback()
-		h.eventBus.Dispatch(events.NewHouseCommandError(command, err))
-		return err
-	}
-
-	if err := h.eventBus.Dispatch(mediasEvent); err != nil {
-		h.repo.Rollback()
+	if err := h.eventBus.Dispatch(&events.SaveHouseMediasEvent{ SaveHouseMediasCommand: command}); err != nil {
 		h.eventBus.Dispatch(events.NewHouseCommandError(command, err))
 		return err
 	}
